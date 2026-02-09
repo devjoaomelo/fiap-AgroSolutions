@@ -1,0 +1,134 @@
+services:
+  # PostgreSQL - Identity Service
+  postgres-identity:
+    image: postgres:16-alpine
+    container_name: agrosolutions-postgres-identity
+    environment:
+      POSTGRES_DB: identity_db
+      POSTGRES_USER: identity_user
+      POSTGRES_PASSWORD: identity_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-identity-data:/var/lib/postgresql/data
+    networks:
+      - agrosolutions-network
+
+  # PostgreSQL - Property Service
+  postgres-property:
+    image: postgres:16-alpine
+    container_name: agrosolutions-postgres-property
+    environment:
+      POSTGRES_DB: property_db
+      POSTGRES_USER: property_user
+      POSTGRES_PASSWORD: property_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-property-data:/var/lib/postgresql/data
+    networks:
+      - agrosolutions-network
+
+  # PostgreSQL - Ingestion Service
+  postgres-ingestion:
+    image: postgres:16-alpine
+    container_name: agrosolutions-postgres-ingestion
+    environment:
+      POSTGRES_DB: ingestion_db
+      POSTGRES_USER: ingestion_user
+      POSTGRES_PASSWORD: ingestion_pass
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-ingestion-data:/var/lib/postgresql/data
+    networks:
+      - agrosolutions-network
+
+  # PostgreSQL - Alerts Service
+  postgres-alerts:
+    image: postgres:16-alpine
+    container_name: agrosolutions-postgres-alerts
+    environment:
+      POSTGRES_DB: alerts_db
+      POSTGRES_USER: alerts_user
+      POSTGRES_PASSWORD: alerts_pass
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-alerts-data:/var/lib/postgresql/data
+    networks:
+      - agrosolutions-network
+
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: agrosolutions-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - agrosolutions-network
+
+  # Seq - Centralized Logging
+  seq:
+    image: datalust/seq:latest
+    container_name: agrosolutions-seq
+    environment:
+      ACCEPT_EULA: Y
+      SEQ_FIRSTRUN_NOAUTHENTICATION: "True"
+    ports:
+      - "5341:80"
+    volumes:
+      - seq-data:/data
+    networks:
+      - agrosolutions-network
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: agrosolutions-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - agrosolutions-network
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: agrosolutions-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - agrosolutions-network
+
+volumes:
+  postgres-identity-data:
+  postgres-property-data:
+  postgres-ingestion-data:
+  postgres-alerts-data:
+  rabbitmq-data:
+  seq-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  agrosolutions-network:
+    driver: bridge
