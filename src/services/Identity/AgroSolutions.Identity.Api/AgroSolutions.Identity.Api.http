@@ -1,0 +1,6 @@
+@AgroSolutions.Identity.Api_HostAddress = http://localhost:5091
+
+GET {{AgroSolutions.Identity.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

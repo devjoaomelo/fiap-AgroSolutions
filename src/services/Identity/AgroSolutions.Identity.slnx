@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="AgroSolutions.Identity.Api/AgroSolutions.Identity.Api.csproj" />
+  <Project Path="AgroSolutions.Identity.Application/AgroSolutions.Identity.Application.csproj" />
+  <Project Path="AgroSolutions.Identity.Domain/AgroSolutions.Identity.Domain.csproj" />
+  <Project Path="AgroSolutions.Identity.Infrastructure/AgroSolutions.Identity.Infrastructure.csproj" />
+</Solution>
