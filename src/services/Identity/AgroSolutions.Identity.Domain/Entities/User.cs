@@ -8,7 +8,12 @@ public class User
     public string Name { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
-    private User() { }
+    private User()
+    {
+        Email = string.Empty;
+        PasswordHash = string.Empty;
+        Name = string.Empty;
+    }
 
     public User(string email, string passwordHash, string name)
     {
