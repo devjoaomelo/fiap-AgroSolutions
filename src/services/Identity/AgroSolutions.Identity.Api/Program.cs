@@ -1,15 +1,31 @@
+using AgroSolutions.Identity.Application.UseCases.Login;
+using AgroSolutions.Identity.Application.UseCases.Register;
+using AgroSolutions.Identity.Domain.Interfaces;
+using AgroSolutions.Identity.Infrastructure.Data;
+using AgroSolutions.Identity.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Database
+builder.Services.AddDbContext<IdentityDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// Handlers
+builder.Services.AddScoped<RegisterHandler>();
+builder.Services.AddScoped<LoginHandler>();
+
+// Controllers
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -17,9 +33,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
