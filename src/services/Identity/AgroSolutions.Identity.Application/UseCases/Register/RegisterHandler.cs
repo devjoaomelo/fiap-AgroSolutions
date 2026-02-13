@@ -1,4 +1,5 @@
-﻿using AgroSolutions.Identity.Domain.Entities;
+﻿using AgroSolutions.Identity.Application.Validators;
+using AgroSolutions.Identity.Domain.Entities;
 using AgroSolutions.Identity.Domain.Interfaces;
 
 namespace AgroSolutions.Identity.Application.UseCases.Register;
@@ -18,19 +19,17 @@ public class RegisterHandler
 
     public async Task<RegisterResponse> Handle(RegisterRequest request)
     {
-        // Validar se email já existe
+        RegisterValidator.Validate(request.Name, request.Email, request.Password);
+
         if (await _userRepository.EmailExistsAsync(request.Email))
         {
             throw new InvalidOperationException("Email em uso");
         }
 
-        // Hash da senha
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-        // Criar usuário
         var user = new User(request.Email, passwordHash, request.Name);
 
-        // Salvar user
         await _userRepository.AddAsync(user);
 
         return new RegisterResponse(user.Id, user.Name, user.Email, user.CreatedAt);

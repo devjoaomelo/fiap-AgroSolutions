@@ -25,6 +25,10 @@ public class AuthController : ControllerBase
             var response = await _registerHandler.Handle(request);
             return Ok(response);
         }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
