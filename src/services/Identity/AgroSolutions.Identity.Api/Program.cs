@@ -1,3 +1,4 @@
+using AgroSolutions.Identity.Application.Services;
 using AgroSolutions.Identity.Application.UseCases.Login;
 using AgroSolutions.Identity.Application.UseCases.Register;
 using AgroSolutions.Identity.Domain.Interfaces;
@@ -7,25 +8,31 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Database
 builder.Services.AddDbContext<IdentityDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
-// Handlers
+builder.Services.AddScoped<IJwtTokenGenerator>(sp =>
+{
+    var config = builder.Configuration.GetSection("Jwt");
+    return new JwtTokenGenerator(
+        secretKey: config["SecretKey"]!,
+        issuer: config["Issuer"]!,
+        audience: config["Audience"]!,
+        expirationMinutes: int.Parse(config["ExpirationMinutes"]!)
+    );
+});
+
 builder.Services.AddScoped<RegisterHandler>();
 builder.Services.AddScoped<LoginHandler>();
 
-// Controllers
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

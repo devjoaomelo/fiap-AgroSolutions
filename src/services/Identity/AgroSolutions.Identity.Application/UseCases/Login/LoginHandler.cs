@@ -1,4 +1,5 @@
-﻿using AgroSolutions.Identity.Domain.Interfaces;
+﻿using AgroSolutions.Identity.Application.Services;
+using AgroSolutions.Identity.Domain.Interfaces;
 
 namespace AgroSolutions.Identity.Application.UseCases.Login;
 
@@ -9,15 +10,16 @@ public record LoginResponse(Guid UserId, string Name, string Email, string Token
 public class LoginHandler
 {
     private readonly IUserRepository _userRepository;
+    private readonly IJwtTokenGenerator _jwtTokenGenerator;
 
-    public LoginHandler(IUserRepository userRepository)
+    public LoginHandler(IUserRepository userRepository, IJwtTokenGenerator jwtTokenGenerator)
     {
         _userRepository = userRepository;
+        _jwtTokenGenerator = jwtTokenGenerator;
     }
 
     public async Task<LoginResponse> Handle(LoginRequest request)
     {
-        // Buscar usuário
         var user = await _userRepository.GetByEmailAsync(request.Email);
 
         if (user == null)
@@ -25,7 +27,6 @@ public class LoginHandler
             throw new UnauthorizedAccessException("Credenciais Inválidas");
         }
 
-        // Verificar senha
         var isValidPassword = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
 
         if (!isValidPassword)
@@ -33,8 +34,7 @@ public class LoginHandler
             throw new UnauthorizedAccessException("Credenciais Inválidas");
         }
 
-        // Gerar token JWT (TODO)
-        var token = "temporary-token";
+        var token = _jwtTokenGenerator.GenerateToken(user.Id, user.Name, user.Email);
 
         return new LoginResponse(user.Id, user.Name, user.Email, token);
     }
