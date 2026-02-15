@@ -2,7 +2,7 @@
 
 namespace AgroSolutions.Property.Domain.Interfaces;
 
-public interface IPropertyRepository
+public interface IRuralPropertyRepository
 {
     Task<RuralProperty?> GetByIdAsync(Guid id);
     Task<IReadOnlyList<RuralProperty>> GetByUserIdAsync(Guid userId);

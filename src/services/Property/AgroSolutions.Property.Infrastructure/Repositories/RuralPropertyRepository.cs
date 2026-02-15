@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgroSolutions.Property.Infrastructure.Repositories;
 
-public class RuralPropertyRepository : IPropertyRepository
+public class RuralPropertyRepository : IRuralPropertyRepository
 {
     private readonly RuralPropertyDbContext _context;
 
