@@ -1,15 +1,33 @@
+using AgroSolutions.Alerts.Application.UseCases.CreateAlert;
+using AgroSolutions.Alerts.Application.UseCases.GetAlerts;
+using AgroSolutions.Alerts.Application.UseCases.ResolveAlert;
+using AgroSolutions.Alerts.Domain.Interfaces;
+using AgroSolutions.Alerts.Infrastructure.Data;
+using AgroSolutions.Alerts.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Database
+builder.Services.AddDbContext<AlertsDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Repositories
+builder.Services.AddScoped<IAlertRepository, AlertRepository>();
+
+// Handlers
+builder.Services.AddScoped<CreateAlertHandler>();
+builder.Services.AddScoped<GetAlertsHandler>();
+builder.Services.AddScoped<ResolveAlertHandler>();
+
+// Controllers
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -17,9 +35,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
