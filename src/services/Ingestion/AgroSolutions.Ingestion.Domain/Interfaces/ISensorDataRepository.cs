@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AgroSolutions.Ingestion.Domain.Entities;
 
-namespace AgroSolutions.Ingestion.Domain.Interfaces
+namespace AgroSolutions.Ingestion.Domain.Interfaces;
+
+public interface ISensorDataRepository
 {
-    internal class ISensorDataRepository
-    {
-    }
+    Task<SensorData?> GetByIdAsync(Guid id);
+    Task<IReadOnlyList<SensorData>> GetByFieldIdAsync(Guid fieldId, DateTime? startDate = null, DateTime? endDate = null);
+    Task AddAsync(SensorData sensorData);
 }
