@@ -40,10 +40,14 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres-ingestion;Port=5432;Database=ingestion_db;Username=ingestion_user;Password=ingestion_pass
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=guest
+      - RabbitMQ__Password=guest
     ports:
       - "5003:8080"
     depends_on:
       - postgres-ingestion
+      - rabbitmq
     networks:
       - agrosolutions-network
 
@@ -56,10 +60,14 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres-alerts;Port=5432;Database=alerts_db;Username=alerts_user;Password=alerts_pass
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Username=guest
+      - RabbitMQ__Password=guest
     ports:
       - "5004:8080"
     depends_on:
       - postgres-alerts
+      - rabbitmq
     networks:
       - agrosolutions-network
 

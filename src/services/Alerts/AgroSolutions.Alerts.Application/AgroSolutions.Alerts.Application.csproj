@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="MassTransit" Version="8.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\AgroSolutions.Alerts.Domain\AgroSolutions.Alerts.Domain.csproj" />
   </ItemGroup>
 
