@@ -4,7 +4,7 @@ namespace AgroSolutions.Alerts.Application.UseCases.ResolveAlert;
 
 public record ResolveAlertRequest(Guid AlertId);
 
-public record ResolveAlertResponse(Guid Id, bool IsResolved, DateTime ResolvedAt);
+public record ResolveAlertResponse(Guid AlertId, bool IsResolved, DateTime ResolvedAt);
 
 public class ResolveAlertHandler
 {
@@ -23,7 +23,7 @@ public class ResolveAlertHandler
             throw new InvalidOperationException("Alerta não encontrado");
 
         if (alert.IsResolved)
-            throw new InvalidOperationException("Esse alerta já foi resolvido");
+            throw new InvalidOperationException("Alerta já foi resolvido");
 
         alert.Resolve();
 

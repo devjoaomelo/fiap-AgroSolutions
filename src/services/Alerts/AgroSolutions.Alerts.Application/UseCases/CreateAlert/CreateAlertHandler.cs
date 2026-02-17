@@ -5,7 +5,7 @@ namespace AgroSolutions.Alerts.Application.UseCases.CreateAlert;
 
 public record CreateAlertRequest(Guid FieldId, string Type, string Message, string Severity);
 
-public record CreateAlertResponse(Guid Id, Guid FieldId, string Type, string Message, string Severity, DateTime CreatedAt);
+public record CreateAlertResponse(Guid AlertId, Guid FieldId, string Type, string Message, string Severity, DateTime CreatedAt);
 
 public class CreateAlertHandler
 {
@@ -25,7 +25,7 @@ public class CreateAlertHandler
             throw new ArgumentException("Mensagem é obrigatória");
 
         if (string.IsNullOrWhiteSpace(request.Severity))
-            throw new ArgumentException("Gravidade é obrigatória");
+            throw new ArgumentException("Severidade é obrigatória");
 
         var alert = new Alert(request.FieldId, request.Type, request.Message, request.Severity);
 

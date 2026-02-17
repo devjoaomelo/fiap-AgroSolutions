@@ -4,7 +4,7 @@ namespace AgroSolutions.Alerts.Application.UseCases.GetAlerts;
 
 public record GetAlertsRequest(Guid? FieldId = null, bool? IsResolved = null);
 
-public record AlertDto(Guid Id, Guid FieldId, string Type, string Message, string Severity, DateTime CreatedAt, bool IsResolved, DateTime? ResolvedAt);
+public record AlertDto(Guid AlertId, Guid FieldId, string Type, string Message, string Severity, DateTime CreatedAt, bool IsResolved, DateTime? ResolvedAt);
 
 public record GetAlertsResponse(List<AlertDto> Alerts);
 

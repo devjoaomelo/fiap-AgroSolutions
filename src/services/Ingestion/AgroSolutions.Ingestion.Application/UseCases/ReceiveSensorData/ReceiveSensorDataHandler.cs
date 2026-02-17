@@ -11,7 +11,7 @@ public record ReceiveSensorDataRequest(
     DateTime? Timestamp = null);
 
 public record ReceiveSensorDataResponse(
-    Guid Id,
+    Guid SensorDataId,
     Guid FieldId,
     double SoilMoisture,
     double Temperature,
@@ -31,13 +31,13 @@ public class ReceiveSensorDataHandler
     public async Task<ReceiveSensorDataResponse> Handle(ReceiveSensorDataRequest request)
     {
         if (request.SoilMoisture < 0 || request.SoilMoisture > 100)
-            throw new ArgumentException("Umidade deve estar entre 0 e 100");
+            throw new ArgumentException("Soil moisture must be between 0 and 100");
 
         if (request.Temperature < -50 || request.Temperature > 60)
-            throw new ArgumentException("Temperatura deve estar entre -50 e 60");
+            throw new ArgumentException("Temperature must be between -50 and 60");
 
         if (request.Precipitation < 0)
-            throw new ArgumentException("Precipitação não pode ser negativa");
+            throw new ArgumentException("Precipitation cannot be negative");
 
         var timestamp = request.Timestamp ?? DateTime.UtcNow;
 

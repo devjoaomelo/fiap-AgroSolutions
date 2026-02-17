@@ -5,7 +5,7 @@ namespace AgroSolutions.Ingestion.Application.UseCases.GetSensorData;
 public record GetSensorDataRequest(Guid FieldId, DateTime? StartDate = null, DateTime? EndDate = null);
 
 public record SensorDataDto(
-    Guid Id,
+    Guid SensorDataId,
     double SoilMoisture,
     double Temperature,
     double Precipitation,
