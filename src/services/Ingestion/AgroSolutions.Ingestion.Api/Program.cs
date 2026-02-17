@@ -3,29 +3,36 @@ using AgroSolutions.Ingestion.Application.UseCases.ReceiveSensorData;
 using AgroSolutions.Ingestion.Domain.Interfaces;
 using AgroSolutions.Ingestion.Infrastructure.Data;
 using AgroSolutions.Ingestion.Infrastructure.Repositories;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Database
 builder.Services.AddDbContext<IngestionDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Repositories
-builder.Services.AddScoped<ISensorDataRepository, SensorDataRepository>();
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
+        {
+            h.Username(builder.Configuration["RabbitMQ:Username"] ?? "guest");
+            h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
+        });
+    });
+});
 
-// Handlers
+builder.Services.AddScoped<ISensorDataRepository, SensorDataRepository>();
 builder.Services.AddScoped<ReceiveSensorDataHandler>();
 builder.Services.AddScoped<GetSensorDataHandler>();
 
-// Controllers
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
