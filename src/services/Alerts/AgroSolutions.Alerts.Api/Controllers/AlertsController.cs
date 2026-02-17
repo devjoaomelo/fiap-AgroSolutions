@@ -1,6 +1,7 @@
 ﻿using AgroSolutions.Alerts.Application.Services;
 using AgroSolutions.Alerts.Application.UseCases.CreateAlert;
 using AgroSolutions.Alerts.Application.UseCases.GetAlerts;
+using AgroSolutions.Alerts.Application.UseCases.ProcessSensorData;
 using AgroSolutions.Alerts.Application.UseCases.ResolveAlert;
 using Microsoft.AspNetCore.Mvc;
 
@@ -74,5 +75,3 @@ public class AlertsController : ControllerBase
         return Ok(new { message = "Dados do sensor processados com sucesso" });
     }
 }
-
-public record ProcessSensorDataRequest(Guid FieldId, double SoilMoisture, double Temperature, double Precipitation);
