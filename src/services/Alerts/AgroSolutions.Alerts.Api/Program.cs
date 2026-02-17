@@ -1,3 +1,4 @@
+using AgroSolutions.Alerts.Application.Services;
 using AgroSolutions.Alerts.Application.UseCases.CreateAlert;
 using AgroSolutions.Alerts.Application.UseCases.GetAlerts;
 using AgroSolutions.Alerts.Application.UseCases.ResolveAlert;
@@ -14,6 +15,9 @@ builder.Services.AddDbContext<AlertsDbContext>(options =>
 
 // Repositories
 builder.Services.AddScoped<IAlertRepository, AlertRepository>();
+
+// Services
+builder.Services.AddScoped<IAlertProcessingService, AlertProcessingService>();
 
 // Handlers
 builder.Services.AddScoped<CreateAlertHandler>();

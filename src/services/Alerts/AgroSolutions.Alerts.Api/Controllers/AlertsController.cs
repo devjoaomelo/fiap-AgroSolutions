@@ -1,4 +1,5 @@
-﻿using AgroSolutions.Alerts.Application.UseCases.CreateAlert;
+﻿using AgroSolutions.Alerts.Application.Services;
+using AgroSolutions.Alerts.Application.UseCases.CreateAlert;
 using AgroSolutions.Alerts.Application.UseCases.GetAlerts;
 using AgroSolutions.Alerts.Application.UseCases.ResolveAlert;
 using Microsoft.AspNetCore.Mvc;
@@ -12,15 +13,18 @@ public class AlertsController : ControllerBase
     private readonly CreateAlertHandler _createAlertHandler;
     private readonly GetAlertsHandler _getAlertsHandler;
     private readonly ResolveAlertHandler _resolveAlertHandler;
+    private readonly IAlertProcessingService _alertProcessingService;
 
     public AlertsController(
         CreateAlertHandler createAlertHandler,
         GetAlertsHandler getAlertsHandler,
-        ResolveAlertHandler resolveAlertHandler)
+        ResolveAlertHandler resolveAlertHandler,
+        IAlertProcessingService alertProcessingService)
     {
         _createAlertHandler = createAlertHandler;
         _getAlertsHandler = getAlertsHandler;
         _resolveAlertHandler = resolveAlertHandler;
+        _alertProcessingService = alertProcessingService;
     }
 
     [HttpPost]
@@ -57,4 +61,18 @@ public class AlertsController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpPost("process")]
+    public async Task<IActionResult> ProcessSensorData([FromBody] ProcessSensorDataRequest request)
+    {
+        await _alertProcessingService.ProcessSensorDataAsync(
+            request.FieldId,
+            request.SoilMoisture,
+            request.Temperature,
+            request.Precipitation);
+
+        return Ok(new { message = "Dados do sensor processados com sucesso" });
+    }
 }
+
+public record ProcessSensorDataRequest(Guid FieldId, double SoilMoisture, double Temperature, double Precipitation);

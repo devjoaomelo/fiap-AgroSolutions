@@ -1,4 +1,68 @@
 services:
+  # Identity API
+  identity-api:
+    build:
+      context: ./src/services/Identity
+      dockerfile: Dockerfile
+    container_name: agrosolutions-identity-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-identity;Port=5432;Database=identity_db;Username=identity_user;Password=identity_pass
+    ports:
+      - "5001:8080"
+    depends_on:
+      - postgres-identity
+    networks:
+      - agrosolutions-network
+
+  # Property API
+  property-api:
+    build:
+      context: ./src/services/Property
+      dockerfile: Dockerfile
+    container_name: agrosolutions-property-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-property;Port=5432;Database=property_db;Username=property_user;Password=property_pass
+    ports:
+      - "5002:8080"
+    depends_on:
+      - postgres-property
+    networks:
+      - agrosolutions-network
+
+  # Ingestion API
+  ingestion-api:
+    build:
+      context: ./src/services/Ingestion
+      dockerfile: Dockerfile
+    container_name: agrosolutions-ingestion-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-ingestion;Port=5432;Database=ingestion_db;Username=ingestion_user;Password=ingestion_pass
+    ports:
+      - "5003:8080"
+    depends_on:
+      - postgres-ingestion
+    networks:
+      - agrosolutions-network
+
+  # Alerts API
+  alerts-api:
+    build:
+      context: ./src/services/Alerts
+      dockerfile: Dockerfile
+    container_name: agrosolutions-alerts-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-alerts;Port=5432;Database=alerts_db;Username=alerts_user;Password=alerts_pass
+    ports:
+      - "5004:8080"
+    depends_on:
+      - postgres-alerts
+    networks:
+      - agrosolutions-network
+
   # PostgreSQL - Identity Service
   postgres-identity:
     image: postgres:16-alpine
