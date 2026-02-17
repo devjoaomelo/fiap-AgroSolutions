@@ -20,7 +20,7 @@ public class FieldsController : ControllerBase
         try
         {
             var response = await _createFieldHandler.Handle(request);
-            return CreatedAtAction(nameof(Create), new { id = response.Id }, response);
+            return CreatedAtAction(nameof(Create), new { id = response.FieldId }, response);
         }
         catch (ArgumentException ex)
         {

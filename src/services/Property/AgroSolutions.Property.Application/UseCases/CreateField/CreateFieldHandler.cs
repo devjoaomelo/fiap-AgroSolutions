@@ -5,7 +5,7 @@ namespace AgroSolutions.Property.Application.UseCases.CreateField;
 
 public record CreateFieldRequest(Guid RuralPropertyId, string Name, string Culture, double Area);
 
-public record CreateFieldResponse(Guid Id, Guid RuralPropertyId, string Name, string Culture, double Area, DateTime CreatedAt);
+public record CreateFieldResponse(Guid FieldId, Guid RuralPropertyId, string Name, string Culture, double Area, DateTime CreatedAt);
 
 public class CreateFieldHandler
 {
@@ -20,8 +20,8 @@ public class CreateFieldHandler
 
     public async Task<CreateFieldResponse> Handle(CreateFieldRequest request)
     {
-        var property = await _ruralPropertyRepository.GetByIdAsync(request.RuralPropertyId);
-        if (property == null)
+        var ruralProperty = await _ruralPropertyRepository.GetByIdAsync(request.RuralPropertyId);
+        if (ruralProperty == null)
             throw new InvalidOperationException("Propriedade não encontrada");
 
         if (string.IsNullOrWhiteSpace(request.Name))

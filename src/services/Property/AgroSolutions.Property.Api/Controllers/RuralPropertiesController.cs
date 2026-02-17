@@ -1,5 +1,5 @@
 ﻿using AgroSolutions.Property.Application.UseCases.CreateRuralProperty;
-using AgroSolutions.Property.Application.UseCases.GetProperties;
+using AgroSolutions.Property.Application.UseCases.GetRuralProperties;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgroSolutions.Property.Api.Controllers;
@@ -9,14 +9,14 @@ namespace AgroSolutions.Property.Api.Controllers;
 public class PropertiesController : ControllerBase
 {
     private readonly CreateRuralPropertyHandler _createRuralPropertyHandler;
-    private readonly GetPropertiesHandler _getPropertiesHandler;
+    private readonly GetRuralPropertiesHandler _getRuralPropertiesHandler;
 
     public PropertiesController(
         CreateRuralPropertyHandler createPropertyHandler,
-        GetPropertiesHandler getPropertiesHandler)
+        GetRuralPropertiesHandler getRuralPropertiesHandler)
     {
         _createRuralPropertyHandler = createPropertyHandler;
-        _getPropertiesHandler = getPropertiesHandler;
+        _getRuralPropertiesHandler = getRuralPropertiesHandler;
     }
 
     [HttpPost]
@@ -36,7 +36,7 @@ public class PropertiesController : ControllerBase
     [HttpGet("user/{userId}")]
     public async Task<IActionResult> GetByUser(Guid userId)
     {
-        var response = await _getPropertiesHandler.Handle(new GetPropertiesRequest(userId));
+        var response = await _getRuralPropertiesHandler.Handle(new GetRuralPropertiesRequest(userId));
         return Ok(response);
     }
 }

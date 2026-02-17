@@ -1,6 +1,6 @@
 using AgroSolutions.Property.Application.UseCases.CreateField;
 using AgroSolutions.Property.Application.UseCases.CreateRuralProperty;
-using AgroSolutions.Property.Application.UseCases.GetProperties;
+using AgroSolutions.Property.Application.UseCases.GetRuralProperties;
 using AgroSolutions.Property.Domain.Interfaces;
 using AgroSolutions.Property.Infrastructure.Data;
 using AgroSolutions.Property.Infrastructure.Repositories;
@@ -19,7 +19,7 @@ builder.Services.AddScoped<IFieldRepository, FieldRepository>();
 // Handlers
 builder.Services.AddScoped<CreateRuralPropertyHandler>();
 builder.Services.AddScoped<CreateFieldHandler>();
-builder.Services.AddScoped<GetPropertiesHandler>();
+builder.Services.AddScoped<GetRuralPropertiesHandler>();
 
 // Controllers
 builder.Services.AddControllers();

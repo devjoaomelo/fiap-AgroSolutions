@@ -6,7 +6,7 @@ public interface IRuralPropertyRepository
 {
     Task<RuralProperty?> GetByIdAsync(Guid id);
     Task<IReadOnlyList<RuralProperty>> GetByUserIdAsync(Guid userId);
-    Task AddAsync(RuralProperty property);
-    Task UpdateAsync(RuralProperty property);
+    Task AddAsync(RuralProperty ruralProperty);
+    Task UpdateAsync(RuralProperty ruralProperty);
     Task DeleteAsync(Guid id);
 }

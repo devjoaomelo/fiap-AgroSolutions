@@ -1,23 +1,23 @@
 ﻿using AgroSolutions.Property.Domain.Interfaces;
 
-namespace AgroSolutions.Property.Application.UseCases.GetProperties;
+namespace AgroSolutions.Property.Application.UseCases.GetRuralProperties;
 
-public record GetPropertiesRequest(Guid UserId);
+public record GetRuralPropertiesRequest(Guid UserId);
 
 public record RuralPropertyDto(Guid Id, string Name, string Location, double TotalArea, int FieldsCount);
 
-public record GetPropertiesResponse(List<RuralPropertyDto> Properties);
+public record GetRuralPropertiesResponse(List<RuralPropertyDto> Properties);
 
-public class GetPropertiesHandler
+public class GetRuralPropertiesHandler
 {
     private readonly IRuralPropertyRepository _ruralPropertyRepository;
 
-    public GetPropertiesHandler(IRuralPropertyRepository ruralPropertyRepository)
+    public GetRuralPropertiesHandler(IRuralPropertyRepository ruralPropertyRepository)
     {
         _ruralPropertyRepository = ruralPropertyRepository;
     }
 
-    public async Task<GetPropertiesResponse> Handle(GetPropertiesRequest request)
+    public async Task<GetRuralPropertiesResponse> Handle(GetRuralPropertiesRequest request)
     {
         var ruralProperties = await _ruralPropertyRepository.GetByUserIdAsync(request.UserId);
 
@@ -29,6 +29,6 @@ public class GetPropertiesHandler
             p.Fields.Count
         )).ToList();
 
-        return new GetPropertiesResponse(ruralPropertiesDto);
+        return new GetRuralPropertiesResponse(ruralPropertiesDto);
     }
 }
