@@ -1,6 +1,6 @@
 # AgroSolutions - Plataforma IoT para Agricultura de Precisão
 
-[![CI/CD Pipeline](https://github.com/devjoaomelo/AgroSolutions/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/devjoaomelo/AgroSolutions/actions)
+[![CI/CD Pipeline](https://github.com/devjoaomelo/fiap-AgroSolutions/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/devjoaomelo/fiap-AgroSolutions/actions)
 
 Sistema de monitoramento agrícola baseado em IoT para otimização de recursos hídricos, aumento de produtividade e sustentabilidade no campo.
 
@@ -221,7 +221,7 @@ Pipeline automatizado com GitHub Actions:
 
 ### Visualizar Pipeline
 
-Acesse: `https://github.com/devjoaomelo/AgroSolutions/actions`
+Acesse: `https://github.com/devjoaomelo/fiap-AgroSolutions/actions`
 
 ## API Documentation
 
