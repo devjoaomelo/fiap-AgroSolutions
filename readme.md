@@ -15,7 +15,7 @@ Sistema de monitoramento agrícola baseado em IoT para otimização de recursos 
 - [CI/CD](#cicd)
 - [API Documentation](#api-documentation)
 
-## 🌾 Visão Geral
+## Visão Geral
 
 A AgroSolutions é uma plataforma de agricultura 4.0 que coleta dados de sensores IoT no campo e gera alertas inteligentes para os produtores rurais, auxiliando na tomada de decisões sobre irrigação, controle de temperatura e gestão de precipitação.
 
