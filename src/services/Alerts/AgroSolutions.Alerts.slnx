@@ -3,4 +3,5 @@
   <Project Path="AgroSolutions.Alerts.Application/AgroSolutions.Alerts.Application.csproj" />
   <Project Path="AgroSolutions.Alerts.Domain/AgroSolutions.Alerts.Domain.csproj" />
   <Project Path="AgroSolutions.Alerts.Infrastructure/AgroSolutions.Alerts.Infrastructure.csproj" />
+  <Project Path="AgroSolutions.Alerts.Tests/AgroSolutions.Alerts.Tests.csproj" />
 </Solution>
