@@ -19,20 +19,38 @@ jobs:
       with:
         dotnet-version: '8.0.x'
     
-    - name: Restore dependencies
-      run: dotnet restore
+    - name: Restore and Build Identity
+      run: |
+        cd src/services/Identity
+        dotnet restore
+        dotnet build --configuration Release --no-restore
     
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
+    - name: Restore and Build Ingestion
+      run: |
+        cd src/services/Ingestion
+        dotnet restore
+        dotnet build --configuration Release --no-restore
+    
+    - name: Restore and Build Alerts
+      run: |
+        cd src/services/Alerts
+        dotnet restore
+        dotnet build --configuration Release --no-restore
+    
+    - name: Restore and Build Property
+      run: |
+        cd src/services/Property
+        dotnet restore
+        dotnet build --configuration Release --no-restore
     
     - name: Test Identity Service
-      run: dotnet test src/services/Identity/AgroSolutions.Identity.Tests/AgroSolutions.Identity.Tests.csproj --no-build --verbosity normal --configuration Release
+      run: dotnet test src/services/Identity/AgroSolutions.Identity.Tests/AgroSolutions.Identity.Tests.csproj --configuration Release
     
     - name: Test Ingestion Service
-      run: dotnet test src/services/Ingestion/AgroSolutions.Ingestion.Tests/AgroSolutions.Ingestion.Tests.csproj --no-build --verbosity normal --configuration Release
+      run: dotnet test src/services/Ingestion/AgroSolutions.Ingestion.Tests/AgroSolutions.Ingestion.Tests.csproj --configuration Release
     
     - name: Test Alerts Service
-      run: dotnet test src/services/Alerts/AgroSolutions.Alerts.Tests/AgroSolutions.Alerts.Tests.csproj --no-build --verbosity normal --configuration Release
+      run: dotnet test src/services/Alerts/AgroSolutions.Alerts.Tests/AgroSolutions.Alerts.Tests.csproj --configuration Release
 
   build:
     name: Build Docker Images
@@ -54,13 +72,6 @@ jobs:
       run: |
         SERVICE_CAPITAL=$(echo "${{ matrix.service }}" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
         docker build -t agrosolutions-${{ matrix.service }}-api:${{ github.sha }} \
-          -f src/services/${SERVICE_CAPITAL}/Dockerfile \
-          src/services/${SERVICE_CAPITAL}
-    
-    - name: Build ${{ matrix.service }} Service (latest)
-      run: |
-        SERVICE_CAPITAL=$(echo "${{ matrix.service }}" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
-        docker build -t agrosolutions-${{ matrix.service }}-api:latest \
           -f src/services/${SERVICE_CAPITAL}/Dockerfile \
           src/services/${SERVICE_CAPITAL}
 
