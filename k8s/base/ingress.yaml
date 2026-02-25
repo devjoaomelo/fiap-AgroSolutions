@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agrosolutions-ingress
+  namespace: agrosolutions
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: agrosolutions.local
+    http:
+      paths:
+      - path: /api/identity(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: identity-api-service
+            port:
+              number: 80
+      - path: /api/property(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: property-api-service
+            port:
+              number: 80
+      - path: /api/ingestion(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: ingestion-api-service
+            port:
+              number: 80
+      - path: /api/alerts(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: alerts-api-service
+            port:
+              number: 80

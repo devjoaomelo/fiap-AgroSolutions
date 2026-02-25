@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-alerts
+  namespace: agrosolutions
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-alerts
+  template:
+    metadata:
+      labels:
+        app: postgres-alerts
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: agrosolutions-config
+              key: ALERTS_DB_NAME
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: agrosolutions-config
+              key: ALERTS_DB_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: agrosolutions-secrets
+              key: ALERTS_DB_PASSWORD
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-alerts-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-alerts
+  namespace: agrosolutions
+spec:
+  selector:
+    app: postgres-alerts
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-alerts-pvc
+  namespace: agrosolutions
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
