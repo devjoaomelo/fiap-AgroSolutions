@@ -33,13 +33,27 @@ public class AuthService
             Password = password
         };
 
-        var response = await _httpClient.PostAsJsonAsync("api/auth/login", request);
-
-        if (response.IsSuccessStatusCode)
+        try
         {
-            return await response.Content.ReadFromJsonAsync<LoginResponse>();
-        }
+            var response = await _httpClient.PostAsJsonAsync("api/auth/login", request);
 
-        return null;
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Response content: {content}"); // DEBUG
+
+                var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
+                Console.WriteLine($"Login response: {loginResponse?.AccessToken}"); // DEBUG
+
+                return loginResponse;
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in LoginAsync: {ex.Message}");
+            throw;
+        }
     }
 }

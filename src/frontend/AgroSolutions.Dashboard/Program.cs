@@ -10,6 +10,18 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 // Registrar AuthStateService como Singleton
 builder.Services.AddSingleton<AuthStateService>();
 
+// Configurar HttpClient para Property API
+builder.Services.AddHttpClient<PropertyService>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:5002/");
+});
+
+// Configurar HttpClient para Field Service (usa Property API)
+builder.Services.AddHttpClient<FieldService>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:5002/");
+});
+
 // Configurar HttpClient para Identity API
 builder.Services.AddHttpClient<AuthService>(client =>
 {

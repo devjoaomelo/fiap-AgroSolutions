@@ -2,6 +2,8 @@
 @using AgroSolutions.Dashboard.Services
 @using AgroSolutions.Dashboard.Models
 @inject AlertService AlertService
+@inject PropertyService PropertyService
+@inject FieldService FieldService
 @inject AuthStateService AuthState
 @inject NavigationManager Navigation
 
@@ -11,10 +13,10 @@
     <div class="row mb-4">
         <div class="col">
             <h2>Dashboard de Alertas</h2>
-            <p class="text-muted">Monitoramento em tempo real das condições agrícolas</p>
+            <p class="text-muted">Bem-vindo, @AuthState.UserName! Monitoramento das suas propriedades</p>
         </div>
         <div class="col-auto">
-            <button class="btn btn-primary" @onclick="LoadAlerts">
+            <button class="btn btn-primary" @onclick="LoadData">
                 <span>🔄 Atualizar</span>
             </button>
         </div>
@@ -26,7 +28,7 @@
             <div class="spinner-border" role="status">
                 <span class="visually-hidden">Carregando...</span>
             </div>
-            <p>Carregando alertas...</p>
+            <p>Carregando seus dados...</p>
         </div>
     }
     else if (!string.IsNullOrEmpty(errorMessage))
@@ -35,10 +37,16 @@
             <strong>Erro:</strong> @errorMessage
         </div>
     }
+    else if (userFields.Count == 0)
+    {
+        <div class="alert alert-warning">
+            <strong>Nenhum talhão cadastrado.</strong> Cadastre propriedades e talhões para começar a monitorar.
+        </div>
+    }
     else if (alerts.Count == 0)
     {
         <div class="alert alert-info">
-            <strong>Nenhum alerta encontrado.</strong> Todas as condições estão normais!
+            <strong>Nenhum alerta encontrado.</strong> Todas as suas condições estão normais!
         </div>
     }
     else
@@ -72,13 +80,15 @@
 
         <div class="card">
             <div class="card-header">
-                <h5>Alertas Ativos</h5>
+                <h5>Alertas dos Seus Talhões</h5>
+                <small class="text-muted">Monitorando @userFields.Count talhão(ões) em @userProperties.Count propriedade(s)</small>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
+                                <th>Talhão</th>
                                 <th>Tipo</th>
                                 <th>Severidade</th>
                                 <th>Mensagem</th>
@@ -89,7 +99,12 @@
                         <tbody>
                             @foreach (var alert in alerts.OrderByDescending(a => a.CreatedAt))
                             {
+                                var field = userFields.FirstOrDefault(f => f.Id == alert.FieldId);
                                 <tr class="@GetRowClass(alert)">
+                                    <td>
+                                        <strong>@(field?.Name ?? "Desconhecido")</strong><br />
+                                        <small class="text-muted">@(field?.Culture ?? "")</small>
+                                    </td>
                                     <td>
                                         <span class="badge @GetBadgeClass(alert.Type)">
                                             @GetAlertIcon(alert.Type) @alert.Type
@@ -124,6 +139,8 @@
 
 @code {
     private List<Alert> alerts = new();
+    private List<Property> userProperties = new();
+    private List<Field> userFields = new();
     private bool isLoading = true;
     private string errorMessage = string.Empty;
 
@@ -139,16 +156,45 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAlerts();
+        await LoadData();
     }
 
-    private async Task LoadAlerts()
+    private async Task LoadData()
     {
         try
         {
             isLoading = true;
             errorMessage = string.Empty;
-            alerts = await AlertService.GetAlertsAsync();
+
+            // 1. Buscar propriedades do usuário
+            userProperties = await PropertyService.GetUserPropertiesAsync();
+
+            if (userProperties.Count == 0)
+            {
+                alerts = new List<Alert>();
+                userFields = new List<Field>();
+                return;
+            }
+
+            // 2. Buscar todos os talhões das propriedades do usuário
+            var propertyIds = userProperties.Select(p => p.Id).ToList();
+            userFields = await FieldService.GetAllUserFieldsAsync(propertyIds);
+
+            if (userFields.Count == 0)
+            {
+                alerts = new List<Alert>();
+                return;
+            }
+
+            // 3. Buscar alertas apenas dos talhões do usuário
+            var allAlerts = new List<Alert>();
+            foreach (var field in userFields)
+            {
+                var fieldAlerts = await AlertService.GetAlertsAsync(field.Id);
+                allAlerts.AddRange(fieldAlerts);
+            }
+
+            alerts = allAlerts;
         }
         catch (Exception ex)
         {

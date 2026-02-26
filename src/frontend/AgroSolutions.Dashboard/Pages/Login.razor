@@ -67,12 +67,16 @@
 
             var response = await AuthService.LoginAsync(loginRequest.Email, loginRequest.Password);
 
-            if (response != null)
+            if (response != null && !string.IsNullOrEmpty(response.AccessToken))
             {
-                // Salvar token no AuthState
-                AuthState.SetAuthenticated(response.AccessToken);
+                // Usar dados que já vêm na resposta
+                AuthState.SetAuthenticated(
+                    response.AccessToken,
+                    response.UserId,
+                    response.Name,
+                    response.Email
+                );
 
-                // Redirecionar para dashboard
                 Navigation.NavigateTo("/dashboard");
             }
             else
