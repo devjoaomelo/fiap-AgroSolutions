@@ -12,6 +12,19 @@ public class AuthService
         _httpClient = httpClient;
     }
 
+    public async Task<bool> RegisterAsync(string name, string email, string password)
+    {
+        var request = new
+        {
+            Name = name,
+            Email = email,
+            Password = password
+        };
+
+        var response = await _httpClient.PostAsJsonAsync("api/auth/register", request);
+        return response.IsSuccessStatusCode;
+    }
+
     public async Task<LoginResponse?> LoginAsync(string email, string password)
     {
         var request = new LoginRequest
