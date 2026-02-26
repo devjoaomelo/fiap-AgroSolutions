@@ -18,7 +18,14 @@ public class AlertService
             ? $"api/alerts?fieldId={fieldId}"
             : "api/alerts";
 
-        var alerts = await _httpClient.GetFromJsonAsync<List<Alert>>(url);
-        return alerts ?? new List<Alert>();
+        // Criar modelo intermediario para deserializar a resposta
+        var response = await _httpClient.GetFromJsonAsync<AlertsResponse>(url);
+        return response?.Alerts ?? new List<Alert>();
+    }
+
+    // Classe interna para mapear a resposta da API
+    private class AlertsResponse
+    {
+        public List<Alert> Alerts { get; set; } = new();
     }
 }
