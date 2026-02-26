@@ -1,39 +1,42 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">AgroSolutions.Dashboard</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-</div>
+﻿@using AgroSolutions.Dashboard.Services
+@inject AuthStateService AuthState
+@implements IDisposable
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
+@if (AuthState.IsAuthenticated)
+{
+    <div class="top-row ps-3 navbar navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="">🌾 AgroSolutions</a>
+            <button class="btn btn-sm btn-outline-light" @onclick="Logout">Sair</button>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
+    </div>
+
+    <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+    <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+        <nav class="flex-column">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="dashboard">
+                    <span class="bi bi-speedometer2-nav-menu" aria-hidden="true"></span> Dashboard
+                </NavLink>
+            </div>
+        </nav>
+    </div>
+}
 
 @code {
-    private bool collapseNavMenu = true;
-
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
+    protected override void OnInitialized()
     {
-        collapseNavMenu = !collapseNavMenu;
+        AuthState.OnChange += StateHasChanged;
+    }
+
+    private void Logout()
+    {
+        AuthState.Logout();
+    }
+
+    public void Dispose()
+    {
+        AuthState.OnChange -= StateHasChanged;
     }
 }

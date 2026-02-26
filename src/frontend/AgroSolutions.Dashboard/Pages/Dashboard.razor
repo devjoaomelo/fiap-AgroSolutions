@@ -1,0 +1,200 @@
+﻿@page "/dashboard"
+@using AgroSolutions.Dashboard.Services
+@using AgroSolutions.Dashboard.Models
+@inject AlertService AlertService
+@inject AuthStateService AuthState
+@inject NavigationManager Navigation
+
+<PageTitle>Dashboard - AgroSolutions</PageTitle>
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Dashboard de Alertas</h2>
+            <p class="text-muted">Monitoramento em tempo real das condições agrícolas</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" @onclick="LoadAlerts">
+                <span>🔄 Atualizar</span>
+            </button>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p>Carregando alertas...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">
+            <strong>Erro:</strong> @errorMessage
+        </div>
+    }
+    else if (alerts.Count == 0)
+    {
+        <div class="alert alert-info">
+            <strong>Nenhum alerta encontrado.</strong> Todas as condições estão normais!
+        </div>
+    }
+    else
+    {
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="card text-white bg-danger">
+                    <div class="card-body">
+                        <h5 class="card-title">Alertas Críticos</h5>
+                        <h2>@alerts.Count(a => a.Severity == "Alta" && !a.IsResolved)</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <h5 class="card-title">Alertas Médios</h5>
+                        <h2>@alerts.Count(a => a.Severity == "Média" && !a.IsResolved)</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h5 class="card-title">Resolvidos</h5>
+                        <h2>@alerts.Count(a => a.IsResolved)</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5>Alertas Ativos</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Severidade</th>
+                                <th>Mensagem</th>
+                                <th>Data/Hora</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var alert in alerts.OrderByDescending(a => a.CreatedAt))
+                            {
+                                <tr class="@GetRowClass(alert)">
+                                    <td>
+                                        <span class="badge @GetBadgeClass(alert.Type)">
+                                            @GetAlertIcon(alert.Type) @alert.Type
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge @GetSeverityClass(alert.Severity)">
+                                            @alert.Severity
+                                        </span>
+                                    </td>
+                                    <td>@alert.Message</td>
+                                    <td>@alert.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        @if (alert.IsResolved)
+                                        {
+                                            <span class="badge bg-success">✓ Resolvido</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">⚠ Ativo</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Alert> alerts = new();
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        // Redirecionar para login se não estiver autenticado
+        if (!AuthState.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAlerts();
+    }
+
+    private async Task LoadAlerts()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+            alerts = await AlertService.GetAlertsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string GetRowClass(Alert alert)
+    {
+        if (alert.IsResolved) return "table-secondary";
+        return alert.Severity == "Alta" ? "table-danger" : "table-warning";
+    }
+
+    private string GetBadgeClass(string type)
+    {
+        return type switch
+        {
+            "Seca" => "bg-danger",
+            "AltaTemperatura" => "bg-warning",
+            "ChuvaForte" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetSeverityClass(string severity)
+    {
+        return severity switch
+        {
+            "Alta" => "bg-danger",
+            "Média" => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetAlertIcon(string type)
+    {
+        return type switch
+        {
+            "Seca" => "💧",
+            "AltaTemperatura" => "🌡️",
+            "ChuvaForte" => "🌧️",
+            _ => "⚠️"
+        };
+    }
+}
