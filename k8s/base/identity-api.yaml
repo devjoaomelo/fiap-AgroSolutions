@@ -20,37 +20,9 @@ spec:
         - containerPort: 8080
         env:
         - name: ASPNETCORE_ENVIRONMENT
-          valueFrom:
-            configMapKeyRef:
-              name: agrosolutions-config
-              key: ASPNETCORE_ENVIRONMENT
+          value: "Production"
         - name: ConnectionStrings__DefaultConnection
-          value: "Host=$(IDENTITY_DB_HOST);Port=5432;Database=$(IDENTITY_DB_NAME);Username=$(IDENTITY_DB_USER);Password=$(IDENTITY_DB_PASSWORD)"
-        - name: IDENTITY_DB_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: agrosolutions-config
-              key: IDENTITY_DB_HOST
-        - name: IDENTITY_DB_NAME
-          valueFrom:
-            configMapKeyRef:
-              name: agrosolutions-config
-              key: IDENTITY_DB_NAME
-        - name: IDENTITY_DB_USER
-          valueFrom:
-            configMapKeyRef:
-              name: agrosolutions-config
-              key: IDENTITY_DB_USER
-        - name: IDENTITY_DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: agrosolutions-secrets
-              key: IDENTITY_DB_PASSWORD
-        - name: Jwt__Key
-          valueFrom:
-            secretKeyRef:
-              name: agrosolutions-secrets
-              key: JWT_SECRET
+          value: "Host=postgres-identity;Port=5432;Database=identity_db;Username=identity_user;Password=password"
         resources:
           requests:
             memory: "256Mi"
