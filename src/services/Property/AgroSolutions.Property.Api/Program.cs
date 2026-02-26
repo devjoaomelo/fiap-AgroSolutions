@@ -1,5 +1,6 @@
 using AgroSolutions.Property.Application.UseCases.CreateField;
 using AgroSolutions.Property.Application.UseCases.CreateRuralProperty;
+using AgroSolutions.Property.Application.UseCases.GetFieldsByProperty;
 using AgroSolutions.Property.Application.UseCases.GetRuralProperties;
 using AgroSolutions.Property.Domain.Interfaces;
 using AgroSolutions.Property.Infrastructure.Data;
@@ -20,13 +21,26 @@ builder.Services.AddScoped<IFieldRepository, FieldRepository>();
 builder.Services.AddScoped<CreateRuralPropertyHandler>();
 builder.Services.AddScoped<CreateFieldHandler>();
 builder.Services.AddScoped<GetRuralPropertiesHandler>();
+builder.Services.AddScoped<GetFieldsByPropertyHandler>();
 
 // Controllers
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors("AllowAll");
 
 // Swagger
 if (app.Environment.IsDevelopment())
