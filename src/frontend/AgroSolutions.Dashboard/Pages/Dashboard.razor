@@ -29,8 +29,6 @@
             </button>
         </div>
     </div>
-    </div>
-
     <div class="row mb-3">
         <div class="col-md-6">
             <label class="form-label">Filtrar por Propriedade</label>
@@ -75,10 +73,10 @@
             <strong>Nenhum talhão cadastrado.</strong> Cadastre propriedades e talhões para começar a monitorar.
         </div>
     }
-    else if (alerts.Count == 0)
+    else if (GetFilteredAlerts().Count() == 0)
     {
         <div class="alert alert-info">
-            <strong>Nenhum alerta encontrado.</strong> Todas as suas condições estão normais!
+            <strong>Nenhum alerta encontrado.</strong> @(showResolvedAlerts ? "Todas as suas condições estão normais!" : "Desmarque 'Mostrar Resolvidos' para ver todos os alertas.")
         </div>
     }
     else
@@ -90,7 +88,7 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="text-muted mb-1">Alertas Críticos</h6>
-                                <h2 class="mb-0 text-danger">@alerts.Count(a => a.Severity == "Alta" && !a.IsResolved)</h2>
+                                <h2 class="mb-0 text-danger">@GetFilteredAlerts().Count(a => a.Severity == "Alta" && !a.IsResolved)</h2>
                             </div>
                             <div class="text-danger" style="font-size: 2.5rem;">⚠️</div>
                         </div>
@@ -103,7 +101,7 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="text-muted mb-1">Alertas Médios</h6>
-                                <h2 class="mb-0 text-warning">@alerts.Count(a => a.Severity == "Média" && !a.IsResolved)</h2>
+                                <h2 class="mb-0 text-warning">@GetFilteredAlerts().Count(a => a.Severity == "Média" && !a.IsResolved)</h2>
                             </div>
                             <div class="text-warning" style="font-size: 2.5rem;">⚡</div>
                         </div>
@@ -116,7 +114,7 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="text-muted mb-1">Resolvidos</h6>
-                                <h2 class="mb-0 text-success">@alerts.Count(a => a.IsResolved)</h2>
+                                <h2 class="mb-0 text-success">@allAlerts.Count(a => a.IsResolved)</h2>
                             </div>
                             <div class="text-success" style="font-size: 2.5rem;">✓</div>
                         </div>
@@ -184,7 +182,7 @@
                                         }
                                         else
                                         {
-                                            <button class="btn btn-sm btn-success" @onclick="() => ResolveAlert(alert.Id)">
+                                            <button class="btn btn-sm btn-success" @onclick="() => ShowConfirmResolve(alert.Id)">
                                                 Resolver
                                             </button>
                                         }
@@ -197,7 +195,33 @@
             </div>
         </div>
     }
+</div>
 
+@if (showConfirmModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Resolução</h5>
+                    <button type="button" class="btn-close" @onclick="CloseConfirmModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja marcar este alerta como resolvido?</p>
+                    <p class="text-muted mb-0">Esta ação não pode ser desfeita.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseConfirmModal">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-success" @onclick="ConfirmResolve">
+                        Sim, Resolver
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     private List<Alert> alerts = new();
@@ -207,19 +231,12 @@
     private List<Field> filteredFields = new();
     private bool isLoading = true;
     private string errorMessage = string.Empty;
-    private bool showResolvedAlerts = true;
 
     private Guid? selectedPropertyId = null;
     private Guid? selectedFieldId = null;
-
-    protected override void OnInitialized()
-    {
-        if (!AuthState.IsAuthenticated)
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-    }
+    private bool showResolvedAlerts = true;
+    private bool showConfirmModal = false;
+    private Guid? alertToResolve = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -359,6 +376,27 @@
         StateHasChanged();
     }
 
+    private void ShowConfirmResolve(Guid alertId)
+    {
+        alertToResolve = alertId;
+        showConfirmModal = true;
+    }
+
+    private void CloseConfirmModal()
+    {
+        alertToResolve = null;
+        showConfirmModal = false;
+    }
+
+    private async Task ConfirmResolve()
+    {
+        if (alertToResolve.HasValue)
+        {
+            await ResolveAlert(alertToResolve.Value);
+        }
+        CloseConfirmModal();
+    }
+
     private async Task ResolveAlert(Guid alertId)
     {
         try
@@ -393,6 +431,18 @@
         {
             ToastService.ShowError($"Erro: {ex.Message}");
         }
+    }
+
+    private IEnumerable<Alert> GetFilteredAlerts()
+    {
+        var filtered = alerts.AsEnumerable();
+
+        if (!showResolvedAlerts)
+        {
+            filtered = filtered.Where(a => !a.IsResolved);
+        }
+
+        return filtered.OrderByDescending(a => a.CreatedAt);
     }
 
     private string GetRowClass(Alert alert)
@@ -431,16 +481,5 @@
             "ChuvaForte" => "🌧️",
             _ => "⚠️"
         };
-    }
-    private IEnumerable<Alert> GetFilteredAlerts()
-    {
-        var filtered = alerts.AsEnumerable();
-
-        if (!showResolvedAlerts)
-        {
-            filtered = filtered.Where(a => !a.IsResolved);
-        }
-
-        return filtered.OrderByDescending(a => a.CreatedAt);
     }
 }
