@@ -22,6 +22,29 @@
         </div>
     </div>
 
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label">Filtrar por Propriedade</label>
+            <select class="form-select" @onchange="OnPropertyFilterChanged">
+                <option value="">Todas as Propriedades</option>
+                @foreach (var property in userProperties)
+                {
+                    <option value="@property.Id">@property.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Filtrar por Talhão</label>
+            <select class="form-select" @onchange="OnFieldFilterChanged" disabled="@(selectedPropertyId == null)">
+                <option value="">Todos os Talhões</option>
+                @foreach (var field in filteredFields)
+                {
+                    <option value="@field.Id">@field.Name (@field.Culture)</option>
+                }
+            </select>
+        </div>
+    </div>
+
     @if (isLoading)
     {
         <div class="text-center">
@@ -169,14 +192,18 @@
 
 @code {
     private List<Alert> alerts = new();
+    private List<Alert> allAlerts = new();
     private List<Property> userProperties = new();
     private List<Field> userFields = new();
+    private List<Field> filteredFields = new();
     private bool isLoading = true;
     private string errorMessage = string.Empty;
 
+    private Guid? selectedPropertyId = null;
+    private Guid? selectedFieldId = null;
+
     protected override void OnInitialized()
     {
-        // Redirecionar para login se não estiver autenticado
         if (!AuthState.IsAuthenticated)
         {
             Navigation.NavigateTo("/login");
@@ -205,6 +232,7 @@
             if (userProperties.Count == 0)
             {
                 alerts = new List<Alert>();
+                allAlerts = new List<Alert>();
                 userFields = new List<Field>();
                 return;
             }
@@ -223,20 +251,22 @@
             if (userFields.Count == 0)
             {
                 alerts = new List<Alert>();
+                allAlerts = new List<Alert>();
                 return;
             }
 
             // 3. Buscar alertas apenas dos talhões do usuário
-            var allAlerts = new List<Alert>();
+            var tempAlerts = new List<Alert>();
             foreach (var field in userFields)
             {
                 Console.WriteLine($"[DEBUG] Buscando alertas para field: {field.Id}");
                 var fieldAlerts = await AlertService.GetAlertsAsync(field.Id);
                 Console.WriteLine($"[DEBUG] Alertas encontrados: {fieldAlerts.Count}");
-                allAlerts.AddRange(fieldAlerts);
+                tempAlerts.AddRange(fieldAlerts);
             }
 
-            Console.WriteLine($"[DEBUG] Total de alertas: {allAlerts.Count}");
+            Console.WriteLine($"[DEBUG] Total de alertas: {tempAlerts.Count}");
+            allAlerts = tempAlerts;
             alerts = allAlerts;
         }
         catch (Exception ex)
@@ -247,6 +277,97 @@
         finally
         {
             isLoading = false;
+        }
+    }
+
+    private async Task OnPropertyFilterChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+
+        if (string.IsNullOrEmpty(value))
+        {
+            selectedPropertyId = null;
+            selectedFieldId = null;
+            filteredFields = new List<Field>();
+            alerts = allAlerts;
+        }
+        else
+        {
+            selectedPropertyId = Guid.Parse(value);
+            selectedFieldId = null;
+
+            // Filtrar talhões da propriedade selecionada
+            filteredFields = userFields.Where(f => f.RuralPropertyId == selectedPropertyId).ToList();
+
+            // Filtrar alertas dos talhões da propriedade
+            var fieldIds = filteredFields.Select(f => f.Id).ToList();
+            alerts = allAlerts.Where(a => fieldIds.Contains(a.FieldId)).ToList();
+        }
+
+        StateHasChanged();
+    }
+
+    private void OnFieldFilterChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+
+        if (string.IsNullOrEmpty(value))
+        {
+            // Mostrar todos os alertas da propriedade selecionada
+            if (selectedPropertyId.HasValue)
+            {
+                var fieldIds = filteredFields.Select(f => f.Id).ToList();
+                alerts = allAlerts.Where(a => fieldIds.Contains(a.FieldId)).ToList();
+            }
+            else
+            {
+                alerts = allAlerts;
+            }
+            selectedFieldId = null;
+        }
+        else
+        {
+            selectedFieldId = Guid.Parse(value);
+
+            // Filtrar alertas apenas do talhão selecionado
+            alerts = allAlerts.Where(a => a.FieldId == selectedFieldId).ToList();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ResolveAlert(Guid alertId)
+    {
+        try
+        {
+            var success = await AlertService.ResolveAlertAsync(alertId);
+
+            if (success)
+            {
+                // Atualizar a lista local em allAlerts
+                var alert = allAlerts.FirstOrDefault(a => a.Id == alertId);
+                if (alert != null)
+                {
+                    alert.IsResolved = true;
+                }
+
+                // Atualizar também na lista filtrada
+                var filteredAlert = alerts.FirstOrDefault(a => a.Id == alertId);
+                if (filteredAlert != null)
+                {
+                    filteredAlert.IsResolved = true;
+                }
+
+                StateHasChanged();
+            }
+            else
+            {
+                errorMessage = "Erro ao resolver alerta";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro: {ex.Message}";
         }
     }
 
@@ -286,33 +407,5 @@
             "ChuvaForte" => "🌧️",
             _ => "⚠️"
         };
-    }
-    private async Task ResolveAlert(Guid alertId)
-    {
-        try
-        {
-            var success = await AlertService.ResolveAlertAsync(alertId);
-
-            if (success)
-            {
-                // Atualizar a lista local
-                var alert = alerts.FirstOrDefault(a => a.Id == alertId);
-                if (alert != null)
-                {
-                    alert.IsResolved = true;
-                }
-
-                // Forçar re-render
-                StateHasChanged();
-            }
-            else
-            {
-                errorMessage = "Erro ao resolver alerta";
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Erro: {ex.Message}";
-        }
     }
 }
