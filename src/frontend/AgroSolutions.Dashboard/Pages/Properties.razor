@@ -5,6 +5,7 @@
 @inject PropertyService PropertyService
 @inject AuthStateService AuthState
 @inject NavigationManager Navigation
+@inject ToastService ToastService
 
 <PageTitle>Minhas Propriedades - AgroSolutions</PageTitle>
 
@@ -186,17 +187,18 @@
 
             if (success)
             {
+                ToastService.ShowSuccess("Propriedade criada com sucesso!");
                 CloseModal();
                 await LoadProperties();
             }
             else
             {
-                createError = "Erro ao criar propriedade";
+                ToastService.ShowError("Erro ao criar propriedade");
             }
         }
         catch (Exception ex)
         {
-            createError = ex.Message;
+            ToastService.ShowError($"Erro: {ex.Message}");
         }
         finally
         {

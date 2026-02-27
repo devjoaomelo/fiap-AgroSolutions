@@ -5,6 +5,7 @@
 @inject AuthService AuthService
 @inject AuthStateService AuthState
 @inject NavigationManager Navigation
+@inject ToastService ToastService
 
 <PageTitle>Login - AgroSolutions</PageTitle>
 
@@ -67,7 +68,6 @@
             var response = await AuthService.LoginAsync(loginRequest.Email, loginRequest.Password);
             if (response != null && !string.IsNullOrEmpty(response.AccessToken))
             {
-                // Salvar no localStorage
                 await AuthState.SetAuthenticatedAsync(
                     response.AccessToken,
                     response.UserId,
@@ -75,16 +75,17 @@
                     response.Email
                 );
 
+                ToastService.ShowSuccess($"Bem-vindo, {response.Name}!");
                 Navigation.NavigateTo("/dashboard");
             }
             else
             {
-                errorMessage = "Email ou senha inválidos";
+                ToastService.ShowError("Email ou senha inválidos");
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro ao fazer login: {ex.Message}";
+            ToastService.ShowError($"Erro ao fazer login: {ex.Message}");
         }
         finally
         {

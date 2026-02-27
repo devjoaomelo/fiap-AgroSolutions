@@ -6,6 +6,7 @@
 @inject FieldService FieldService
 @inject AuthStateService AuthState
 @inject NavigationManager Navigation
+@inject ToastService ToastService
 
 <PageTitle>Dashboard - AgroSolutions</PageTitle>
 
@@ -371,16 +372,17 @@
                     filteredAlert.IsResolved = true;
                 }
 
+                ToastService.ShowSuccess("Alerta resolvido com sucesso!");
                 StateHasChanged();
             }
             else
             {
-                errorMessage = "Erro ao resolver alerta";
+                ToastService.ShowError("Erro ao resolver alerta");
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro: {ex.Message}";
+            ToastService.ShowError($"Erro: {ex.Message}");
         }
     }
 

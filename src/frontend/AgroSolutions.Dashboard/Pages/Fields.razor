@@ -6,6 +6,7 @@
 @inject PropertyService PropertyService
 @inject AuthStateService AuthState
 @inject NavigationManager Navigation
+@inject ToastService ToastService
 
 <PageTitle>Talhões - AgroSolutions</PageTitle>
 
@@ -225,7 +226,7 @@
             // Validar se a área não excede o disponível
             if (newField.Area > availableArea)
             {
-                createError = $"Área do talhão ({newField.Area:N2} ha) excede a área disponível ({availableArea:N2} ha)";
+                ToastService.ShowError($"Área do talhão ({newField.Area:N2} ha) excede a área disponível ({availableArea:N2} ha)");
                 return;
             }
 
@@ -238,17 +239,18 @@
 
             if (success)
             {
+                ToastService.ShowSuccess("Talhão criado com sucesso!");
                 CloseModal();
                 await LoadFields();
             }
             else
             {
-                createError = "Erro ao criar talhão";
+                ToastService.ShowError("Erro ao criar talhão");
             }
         }
         catch (Exception ex)
         {
-            createError = ex.Message;
+            ToastService.ShowError($"Erro: {ex.Message}");
         }
         finally
         {
