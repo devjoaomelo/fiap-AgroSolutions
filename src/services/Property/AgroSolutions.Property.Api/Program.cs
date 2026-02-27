@@ -8,6 +8,7 @@ using AgroSolutions.Property.Domain.Interfaces;
 using AgroSolutions.Property.Infrastructure.Data;
 using AgroSolutions.Property.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +56,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
+app.UseHttpMetrics();
 app.MapControllers();
+app.MapMetrics();
 
 app.Run();

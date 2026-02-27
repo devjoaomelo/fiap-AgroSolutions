@@ -2,7 +2,7 @@
 
 [![CI/CD Pipeline](https://github.com/devjoaomelo/fiap-AgroSolutions/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/devjoaomelo/fiap-AgroSolutions/actions)
 
-Sistema de monitoramento agrícola baseado em IoT para otimização de recursos hídricos, aumento de produtividade e sustentabilidade no campo.
+Sistema completo de monitoramento agrícola baseado em IoT para otimização de recursos hídricos, aumento de produtividade e sustentabilidade no campo.
 
 ## Índice
 
@@ -13,245 +13,453 @@ Sistema de monitoramento agrícola baseado em IoT para otimização de recursos 
 - [Como Executar](#como-executar)
 - [Testes](#testes)
 - [CI/CD](#cicd)
+- [Monitoramento](#monitoramento)
+- [Frontend](#frontend)
 - [API Documentation](#api-documentation)
 
 ## Visão Geral
 
-A AgroSolutions é uma plataforma de agricultura 4.0 que coleta dados de sensores IoT no campo e gera alertas inteligentes para os produtores rurais, auxiliando na tomada de decisões sobre irrigação, controle de temperatura e gestão de precipitação.
+A AgroSolutions é uma plataforma completa de agricultura 4.0 que coleta dados de sensores IoT no campo, processa alertas inteligentes e fornece um dashboard interativo para os produtores rurais tomarem decisões informadas sobre irrigação, controle de temperatura e gestão de precipitação.
 
 ### Problema Resolvido
 
 - **Desperdício de recursos**: Irrigação sem dados em tempo real
 - **Baixa produtividade**: Decisões baseadas apenas na experiência
 - **Riscos climáticos**: Sem monitoramento contínuo das condições
+- **Falta de visibilidade**: Sem dashboard centralizado para gestão
 
 ### Solução
 
-Sistema distribuído de microserviços que:
-- Ingere dados de sensores em tempo real
-- Processa regras de negócio automaticamente
-- Gera alertas inteligentes via mensageria
-- Fornece APIs RESTful para integração
+Sistema distribuído end-to-end que oferece:
+- **Backend**: 4 microserviços .NET 8 com arquitetura limpa
+- **Frontend**: Dashboard Blazor WebAssembly moderno e responsivo
+- **Mensageria**: RabbitMQ para comunicação assíncrona
+- **Monitoramento**: Prometheus + Grafana em tempo real
+- **CI/CD**: Pipeline automatizado com GitHub Actions
+- **Containerização**: Docker Compose para deploy simplificado
 
 ## Arquitetura
 
-### Microserviços
-
+### Diagrama de Microserviços
 ```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   Identity  │    │  Property   │    │  Ingestion  │    │   Alerts    │
-│   Service   │    │   Service   │    │   Service   │    │   Service   │
-│             │    │             │    │             │    │             │
-│  - Auth     │    │  - Props    │    │  - Sensors  │    │  - Rules    │
-│  - Users    │    │  - Fields   │    │  - Data     │    │  - Notify   │
-└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
-      │                   │                   │                   │
-      └───────────────────┴───────────────────┴───────────────────┘
-                                  │
-                    ┌─────────────┴─────────────┐
-                    │                           │
-              ┌─────▼─────┐              ┌─────▼─────┐
-              │ RabbitMQ  │              │PostgreSQL │
-              │ (Message  │              │(Database) │
-              │  Broker)  │              │           │
-              └───────────┘              └───────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                      Frontend (Blazor WASM)                     │
+│  - Dashboard de Alertas    - Gestão de Propriedades            │
+│  - Gestão de Talhões       - Simulador de Sensores             │
+│  - Autenticação JWT        - Filtros e Ordenação               │
+└────────────────────┬────────────────────────────────────────────┘
+                     │ HTTP/REST
+         ┌───────────┼───────────┬───────────┬───────────┐
+         │           │           │           │           │
+    ┌────▼────┐ ┌───▼────┐ ┌───▼─────┐ ┌───▼─────┐     │
+    │Identity │ │Property│ │Ingestion│ │ Alerts  │     │
+    │Service  │ │Service │ │Service  │ │ Service │     │
+    │         │ │        │ │         │ │         │     │
+    │- Auth   │ │- Props │ │- Sensors│ │- Rules  │     │
+    │- Users  │ │- Fields│ │- Data   │ │- Notify │     │
+    │- JWT    │ │- CRUD  │ │- Events │ │- CRUD   │     │
+    └────┬────┘ └───┬────┘ └────┬────┘ └────┬────┘     │
+         │          │           │           │           │
+         │          │      ┌────▼──────┐    │           │
+         │          │      │ RabbitMQ  │◄───┘           │
+         │          │      │ (MassTransit)              │
+         │          │      └───────────┘                │
+         │          │                                   │
+    ┌────▼──────────▼────────────────────────┐         │
+    │     PostgreSQL (4 databases)           │         │
+    │  - identity_db  - property_db          │         │
+    │  - ingestion_db - alerts_db            │         │
+    └────────────────────────────────────────┘         │
+                                                        │
+    ┌───────────────────────────────────────────────────┘
+    │ Observability Stack
+    ├─ Prometheus (métricas)
+    ├─ Grafana (dashboards)
+    └─ Seq (logs centralizados)
 ```
-[Veja Mais](https://github.com/devjoaomelo/fiap-AgroSolutions/blob/main/docs/architecture/ARCHITECTURE.md)
 
 ### Fluxo de Dados
 
-1. **Autenticação**: Produtor faz login no Identity Service
-2. **Cadastro**: Registra propriedades e talhões no Property Service
-3. **Ingestão**: Sensores enviam dados para Ingestion Service
-4. **Mensageria**: Ingestion publica evento no RabbitMQ
-5. **Processamento**: Alerts Service consome evento e aplica regras
-6. **Alertas**: Sistema gera alertas automáticos se necessário
+1. **Autenticação**: Usuário faz login → Identity Service retorna JWT
+2. **Cadastro**: Produtor cadastra propriedades e talhões via Frontend
+3. **Simulação**: Frontend simula dados de sensor → Ingestion Service
+4. **Publicação**: Ingestion publica evento `SensorDataReceived` no RabbitMQ
+5. **Consumo**: Alerts Service consome evento automaticamente
+6. **Processamento**: Motor de regras avalia condições e gera alertas
+7. **Visualização**: Dashboard exibe alertas em tempo real com filtros
 
-### Regras de Negócio (Motor de Alertas)
+### Decisões Arquiteturais
 
-| Condição | Tipo de Alerta | Severidade |
-|----------|----------------|------------|
-| Umidade do solo < 30% | Seca | Alta |
-| Temperatura > 35°C | Alta Temperatura | Média |
-| Precipitação > 50mm | Chuva Forte | Alta |
+#### Microserviços
+**Decisão**: Separar sistema em 4 serviços independentes
+**Justificativa**: 
+- Escalabilidade individual (Ingestion pode escalar independente)
+- Isolamento de falhas (problema no Identity não afeta Alerts)
+- Tecnologias específicas por domínio
+- Deploys independentes
+
+#### Event-Driven com RabbitMQ
+**Decisão**: Comunicação assíncrona via mensageria
+**Justificativa**:
+- Desacoplamento entre Ingestion e Alerts
+- Resiliência (se Alerts cair, mensagens ficam na fila)
+- Escalabilidade (múltiplos consumers)
+- Auditoria (rastreamento de eventos)
+
+#### Database per Service
+**Decisão**: PostgreSQL separado para cada serviço
+**Justificativa**:
+- Isolamento de dados (segurança)
+- Schemas independentes
+- Backups e migrations isolados
+- Sem dependências entre bases
+
+#### Clean Architecture
+**Decisão**: Camadas Domain → Application → Infrastructure → API
+**Justificativa**:
+- Testabilidade (domain isolado)
+- Manutenibilidade
+- Inversão de dependências
+- Padrão da indústria
 
 ## Funcionalidades
 
-### Identity Service
-- ✅ Registro de usuários com validação
-- ✅ Login com JWT
+### ✅ Backend Completo
+
+#### Identity Service
+- ✅ Registro de usuários com validações robustas
+- ✅ Login com JWT (tokens persistentes)
 - ✅ Hash de senhas com BCrypt
-- ✅ Primeiro usuário vira Admin automaticamente
+- ✅ Primeiro usuário vira Admin
+- ✅ Event Store para auditoria
+- ✅ CORS habilitado
 
-### Property Service
-- ✅ Cadastro de propriedades rurais
-- ✅ Cadastro de talhões (fields)
-- ✅ Consulta por usuário
-- ✅ Relacionamento propriedade → talhões
+#### Property Service
+- ✅ CRUD completo de propriedades rurais
+- ✅ CRUD completo de talhões
+- ✅ Filtro multi-tenant (usuário vê apenas suas propriedades)
+- ✅ Validação de área disponível
+- ✅ Delete em cascata (propriedade → talhões)
 
-### Ingestion Service
+#### Ingestion Service
 - ✅ Recebimento de dados de sensores
-- ✅ Validação de dados (ranges)
+- ✅ Validação de ranges (umidade, temperatura, precipitação)
 - ✅ Publicação de eventos no RabbitMQ
-- ✅ Persistência em banco de dados
+- ✅ Persistência em banco
+- ✅ CORS habilitado
 
-### Alerts Service
-- ✅ Consumo automático de eventos
-- ✅ Motor de regras de negócio
-- ✅ Prevenção de alertas duplicados
-- ✅ Consulta de alertas por talhão
-- ✅ Resolução de alertas
+#### Alerts Service
+- ✅ Consumer automático de eventos
+- ✅ Motor de regras de negócio configurável
+- ✅ 3 tipos de alertas (Seca, Alta Temperatura, Chuva Forte)
+- ✅ Prevenção de alertas duplicados (24h de cooldown)
+- ✅ Consulta com filtros
+- ✅ Marcar alertas como resolvidos
+
+### ✅ Frontend Moderno (Blazor WASM)
+
+#### Dashboard de Alertas
+- ✅ Cards de estatísticas (Críticos, Médios, Resolvidos, Total)
+- ✅ Tabela com ordenação clicável (6 colunas)
+- ✅ Filtros por Propriedade e Talhão
+- ✅ Toggle "Mostrar/Ocultar Resolvidos"
+- ✅ Indicador "Última Atualização" com auto-refresh
+- ✅ Confirmação antes de resolver alertas
+
+#### Gestão de Propriedades
+- ✅ Cards modernos com gradientes
+- ✅ Visualização de área total e localização
+- ✅ Modal de criação com validações
+- ✅ Delete com confirmação
+- ✅ Navegação para talhões
+
+#### Gestão de Talhões
+- ✅ Cards verdes por talhão
+- ✅ Indicador de área disponível em tempo real
+- ✅ Simulador de dados de sensor (botão por talhão)
+- ✅ Validação de área (não pode exceder disponível)
+- ✅ Delete individual
+- ✅ Breadcrumb de navegação
+
+#### UX/UI
+- ✅ Autenticação persistente (localStorage)
+- ✅ Logout funcional
+- ✅ Toast notifications globais
+- ✅ Validações em todos formulários
+- ✅ Design responsivo
+- ✅ Sidebar fixa com navegação
+- ✅ Loading states
 
 ## Tecnologias
 
 ### Backend
 - **.NET 8** - Framework principal
-- **ASP.NET Core** - Web APIs
-- **Entity Framework Core** - ORM
-- **PostgreSQL** - Banco de dados relacional
-- **MassTransit** - Abstração para RabbitMQ
+- **ASP.NET Core** - Web APIs RESTful
+- **Entity Framework Core 8** - ORM
+- **PostgreSQL 16** - Banco de dados
+- **MassTransit 8** - Abstração para RabbitMQ
 - **BCrypt.Net** - Hash de senhas
+- **System.IdentityModel.Tokens.Jwt** - Geração de tokens
+
+### Frontend
+- **Blazor WebAssembly** - SPA Framework
+- **Bootstrap 5** - CSS Framework
+- **Custom CSS** - Design system próprio
 
 ### Mensageria
-- **RabbitMQ** - Message broker
+- **RabbitMQ 3** - Message broker
+- **RabbitMQ Management** - Interface de administração
 
 ### Observabilidade
-- **Seq** - Logs centralizados
-- **Prometheus** - Métricas
-- **Grafana** - Dashboards
+- **Seq** - Logs centralizados estruturados
+- **Prometheus** - Coleta de métricas
+- **Grafana** - Dashboards interativos
+- **prometheus-net.AspNetCore** - Exporter .NET
 
 ### DevOps
-- **Docker** - Containerização
+- **Docker 24** - Containerização
 - **Docker Compose** - Orquestração local
-- **GitHub Actions** - CI/CD
-- **Kubernetes** - Orquestração em produção (planejado)
+- **GitHub Actions** - CI/CD automatizado
+- **Kubernetes** - Manifestos prontos para produção
 
 ### Testes
 - **xUnit** - Framework de testes
-- **Moq** - Mocking
-- **FluentAssertions** - Assertions
+- **Moq** - Mocking de dependências
+- **FluentAssertions** - Assertions fluentes
+- **Testes unitários** - Cobertura de regras críticas
 
 ## Como Executar
 
 ### Pré-requisitos
 
-- Docker Desktop
-- .NET 8 SDK (para desenvolvimento local)
+- **Docker Desktop** (obrigatório)
+- **.NET 8 SDK** (apenas para desenvolvimento local)
+- **Git** (para clonar o repositório)
 
-### Opção 1: Docker Compose (Recomendado)
-
+### Executar Projeto Completo
 ```bash
-# Clone o repositório
-git clone https://github.com/devjoaomelo/AgroSolutions.git
+# 1. Clone o repositório
+git clone https://github.com/devjoaomelo/fiap-AgroSolutions.git
 cd AgroSolutions
 
-# Suba toda a infraestrutura
+# 2. Suba toda a infraestrutura (backend + observability)
 docker compose up -d
 
-# Aguarde ~30 segundos para tudo inicializar
-```
+# 3. Aguarde ~30-60 segundos para tudo inicializar
+docker compose ps  # Verificar se tudo está "Up"
 
-**Serviços disponíveis:**
-- Identity API: http://localhost:5001/swagger
-- Property API: http://localhost:5002/swagger
-- Ingestion API: http://localhost:5003/swagger
-- Alerts API: http://localhost:5004/swagger
-- RabbitMQ Management: http://localhost:15672 (guest/guest)
-- Seq Logs: http://localhost:5341
-- Prometheus: http://localhost:9090
-- Grafana: http://localhost:3000 (admin/admin)
-
-### Opção 2: Desenvolvimento Local
-
-```bash
-# Suba apenas a infraestrutura
-docker compose up -d rabbitmq postgres-identity postgres-property postgres-ingestion postgres-alerts seq prometheus grafana
-
-# Rode cada serviço separadamente
-cd src/services/Identity/AgroSolutions.Identity.Api
+# 4. Execute o frontend
+cd src/frontend/AgroSolutions.Dashboard
 dotnet run
 
-# Em outros terminais...
-cd src/services/Property/AgroSolutions.Property.Api
-dotnet run
-
-# E assim por diante...
+# 5. Acesse http://localhost:5000
 ```
+
+### Serviços Disponíveis
+
+| Serviço | URL | Credenciais |
+|---------|-----|-------------|
+| **Frontend Dashboard** | http://localhost:5000 | - |
+| Identity API | http://localhost:5001/swagger | - |
+| Property API | http://localhost:5002/swagger | - |
+| Ingestion API | http://localhost:5003/swagger | - |
+| Alerts API | http://localhost:5004/swagger | - |
+| RabbitMQ Management | http://localhost:15672 | guest/guest |
+| Seq Logs | http://localhost:5341 | - |
+| Prometheus | http://localhost:9090 | - |
+| Grafana | http://localhost:3000 | admin/admin |
+
+### Primeiro Uso
+
+1. Acesse o frontend: http://localhost:5000
+2. Clique em "Registrar"
+3. Crie sua conta (primeiro usuário será Admin)
+4. Faça login
+5. Cadastre uma propriedade
+6. Cadastre talhões na propriedade
+7. Simule dados de sensor
+8. Veja os alertas gerados automaticamente!
 
 ## Testes
 
-### Executar todos os testes
-
+### Executar Todos os Testes
 ```bash
+# Na raiz do projeto
 dotnet test
+
+# Com detalhes
+dotnet test --logger "console;verbosity=detailed"
 ```
 
-### Executar testes por serviço
-
+### Testes por Serviço
 ```bash
-# Identity
+# Identity (6 testes)
 dotnet test src/services/Identity/AgroSolutions.Identity.Tests/
 
-# Ingestion
+# Ingestion (8 testes)
 dotnet test src/services/Ingestion/AgroSolutions.Ingestion.Tests/
 
-# Alerts
+# Alerts (6 testes)
 dotnet test src/services/Alerts/AgroSolutions.Alerts.Tests/
 ```
 
-### Cobertura de Testes
+### Cobertura
 
-- **Identity Service**: 6 testes - Validações, registro, hash
-- **Ingestion Service**: 8 testes - Validações, publicação de eventos
-- **Alerts Service**: 6 testes - Regras de negócio, processamento
+- **Total**: 20 testes unitários
+- **Identity**: Validações de email, senha, hash, registro
+- **Ingestion**: Validações de sensor data, publicação de eventos
+- **Alerts**: Regras de negócio, cooldown, processamento de eventos
 
 ## CI/CD
 
-Pipeline automatizado com GitHub Actions:
+### Pipeline GitHub Actions
 
-### Jobs
+Arquivo: `.github/workflows/ci-cd.yml`
 
-1. **Test** - Roda todos os testes unitários
-2. **Build** - Cria imagens Docker dos 4 serviços
-3. **Push** - Publica imagens no Docker Hub (branch main)
+**Jobs:**
 
-### Triggers
+1. **test** - Executa todos os testes unitários
+2. **build-identity** - Build e push da imagem Identity
+3. **build-property** - Build e push da imagem Property
+4. **build-ingestion** - Build e push da imagem Ingestion
+5. **build-alerts** - Build e push da imagem Alerts
 
+**Triggers:**
 - Push em `main`, `master`, `develop`
-- Pull requests para `main`, `master`
+- Pull Requests para `main`, `master`
 
-### Visualizar Pipeline
+**Artefatos:**
+- Imagens Docker no Docker Hub
+- Logs de testes
+- Coverage reports (planejado)
 
-Acesse: `https://github.com/devjoaomelo/fiap-AgroSolutions/actions`
+**Visualizar**: https://github.com/devjoaomelo/fiap-AgroSolutions/actions
+
+## Monitoramento
+
+### Grafana - Dashboard AgroSolutions
+
+Acesse: http://localhost:3000
+
+**Dashboard "AgroSolutions - Microservices Monitoring":**
+
+1. **HTTP Requests Rate** - Requisições por segundo de cada API
+2. **Memory Usage** - Consumo de RAM por serviço (MB)
+3. **CPU Usage** - Percentual de CPU utilizado
+4. **Total Requests** - Contador acumulado
+5. **Active Threads** - Thread pool do .NET
+6. **GC Collections** - Coletas de lixo por geração
+
+**Como usar:**
+- Dashboard atualiza automaticamente a cada 5 segundos
+- Use o frontend enquanto observa os gráficos em tempo real
+- Ideal para demonstrações ao vivo
+
+### Prometheus
+
+Acesse: http://localhost:9090
+
+**Queries úteis:**
+```promql
+# Requests por segundo
+rate(http_requests_received_total[5m])
+
+# Memória em MB
+process_working_set_bytes / 1024 / 1024
+
+# CPU em %
+rate(process_cpu_seconds_total[5m]) * 100
+```
+
+### Seq - Logs Estruturados
+
+Acesse: http://localhost:5341
+
+**Filtros úteis:**
+```
+@Level = 'Error'
+@Level = 'Information'
+ServiceName = 'agrosolutions-alerts-api'
+@Message like '%SensorDataReceived%'
+```
+
+### RabbitMQ Management
+
+Acesse: http://localhost:15672 (guest/guest)
+
+Monitore:
+- Filas ativas
+- Mensagens publicadas/consumidas
+- Throughput
+- Consumers conectados
+
+## Frontend
+
+### Páginas
+
+- **/login** - Autenticação
+- **/register** - Cadastro de usuário
+- **/dashboard** - Dashboard de alertas (página inicial)
+- **/properties** - Gestão de propriedades
+- **/fields/{propertyId}** - Gestão de talhões
+
+### Recursos
+
+- **Autenticação JWT** - Token armazenado no localStorage
+- **Multi-tenant** - Cada usuário vê apenas seus dados
+- **Responsivo** - Mobile-first design
+- **Toast Notifications** - Feedback visual em todas operações
+- **Validações** - Data Annotations + lógica de negócio
+- **Loading States** - Spinners durante requisições
+- **Confirmações** - Modais antes de ações destrutivas
 
 ## API Documentation
 
-### Fluxo Completo de Uso
+### Fluxo Completo (Frontend)
+
+O frontend automatiza todo esse fluxo, mas as APIs podem ser chamadas diretamente:
 
 #### 1. Registrar Usuário
-```bash
+```http
 POST http://localhost:5001/api/auth/register
+Content-Type: application/json
+
 {
-  "name": "João Silva",
-  "email": "joao@agro.com",
+  "name": "Exemplo da Silva",
+  "email": "exemplo@exemplo.com",
   "password": "Senha@123"
 }
 ```
 
+**Response:** 201 Created
+
 #### 2. Login
-```bash
+```http
 POST http://localhost:5001/api/auth/login
+Content-Type: application/json
+
 {
-  "email": "joao@agro.com",
+  "email": "exemplo@exemplo.com",
   "password": "Senha@123"
+}
+```
+
+**Response:**
+```json
+{
+  "accessToken": "eyJhbGc...",
+  "expiresAtUtc": "2024-10-10T12:00:00Z"
 }
 ```
 
 #### 3. Cadastrar Propriedade
-```bash
-POST http://localhost:5002/api/properties
+```http
+POST http://localhost:5002/api/Properties
+Authorization: Bearer {token}
+Content-Type: application/json
+
 {
-  "userId": "guid-do-usuario",
+  "userId": "user-guid",
   "name": "Fazenda São José",
   "location": "Campinas, SP",
   "totalArea": 500.0
@@ -259,65 +467,107 @@ POST http://localhost:5002/api/properties
 ```
 
 #### 4. Cadastrar Talhão
-```bash
-POST http://localhost:5002/api/fields
+```http
+POST http://localhost:5002/api/Fields
+Authorization: Bearer {token}
+Content-Type: application/json
+
 {
-  "ruralPropertyId": "guid-da-propriedade",
-  "name": "Talhão 1",
+  "ruralPropertyId": "property-guid",
+  "name": "Talhão Norte",
   "culture": "Soja",
   "area": 50.0
 }
 ```
 
-#### 5. Enviar Dados do Sensor
-```bash
-POST http://localhost:5003/api/sensordata
+#### 5. Simular Sensor
+```http
+POST http://localhost:5003/api/SensorData
+Content-Type: application/json
+
 {
-  "fieldId": "guid-do-talhao",
+  "fieldId": "field-guid",
   "soilMoisture": 20.0,
   "temperature": 38.0,
   "precipitation": 60.0
 }
 ```
 
-#### 6. Consultar Alertas (automático!)
-```bash
-GET http://localhost:5004/api/alerts?fieldId=guid-do-talhao
+**Resultado Automático:**
+- Evento publicado no RabbitMQ
+- Alerts Service processa
+- 3 alertas gerados (Seca, Temperatura, Chuva)
+
+#### 6. Consultar Alertas
+```http
+GET http://localhost:5004/api/Alerts?fieldId=field-guid
+Authorization: Bearer {token}
 ```
 
-**Resultado esperado**: 3 alertas criados automaticamente via RabbitMQ
-- Alerta de Seca (umidade < 30%)
-- Alerta de Alta Temperatura (temp > 35°C)
-- Alerta de Chuva Forte (precip > 50mm)
+**Response:**
+```json
+[
+  {
+    "id": "alert-guid",
+    "fieldId": "field-guid",
+    "type": "Seca",
+    "severity": "Alta",
+    "message": "Umidade do solo abaixo de 30%",
+    "isResolved": false,
+    "createdAt": "2024-10-10T10:30:00Z"
+  }
+]
+```
 
-## Monitoramento
+## Kubernetes
 
-### Logs (Seq)
-- Acesse: http://localhost:5341
-- Busque por: `@Level = 'Error'` ou `@Level = 'Information'`
-- Filtre por serviço: `ServiceName = 'agrosolutions-alerts-api'`
+Manifestos prontos em `/k8s`:
+```
+k8s/
+├── deployments/
+│   ├── identity-deployment.yaml
+│   ├── property-deployment.yaml
+│   ├── ingestion-deployment.yaml
+│   └── alerts-deployment.yaml
+├── services/
+│   ├── identity-service.yaml
+│   ├── property-service.yaml
+│   ├── ingestion-service.yaml
+│   └── alerts-service.yaml
+└── configmaps/
+    └── app-config.yaml
+```
 
-### Métricas (Prometheus + Grafana)
-- Prometheus: http://localhost:9090
-- Grafana: http://localhost:3000
-- Dashboards pré-configurados para cada serviço
+**Deploy:**
+```bash
+kubectl apply -f k8s/
+```
 
-### RabbitMQ
-- Management UI: http://localhost:15672
-- Monitore filas, throughput e consumers
+## Regras de Negócio (Motor de Alertas)
+
+| Condição | Tipo de Alerta | Severidade | Mensagem |
+|----------|----------------|------------|----------|
+| Umidade do solo < 30% | Seca | Alta | Umidade do solo abaixo de 30% |
+| Temperatura > 35°C | AltaTemperatura | Média | Temperatura acima de 35°C |
+| Precipitação > 50mm | ChuvaForte | Alta | Precipitação acima de 50mm |
+
+**Cooldown:** 24 horas (evita alertas duplicados)
 
 ## Próximos Passos
 
-- [ ] Manifestos Kubernetes
-- [ ] Dashboard Blazor
-- [ ] Integração com API de clima
-- [ ] Notificações por email/SMS
+- [ ] Integração com API de previsão do tempo
+- [ ] Notificações push em tempo real (SignalR)
+- [ ] Exportação de relatórios CSV/PDF
 - [ ] Machine Learning para previsões
+- [ ] App mobile (React Native)
+- [ ] Integração com drones agrícolas
 
 ## Autor
 
-Desenvolvido por JOÃO MELO como parte do Hackathon 8NETT - Pós-Graduação em Arquitetura de Software .NET
+**João Melo**
+- GitHub: [@devjoaomelo](https://github.com/devjoaomelo)
+- Projeto: Hackathon 8NETT - Pós-Graduação em Arquitetura de Software .NET
 
 ## Licença
 
-Este projeto é parte de um trabalho acadêmico.
+Este projeto é parte de um trabalho acadêmico desenvolvido para o curso de pós-graduação em Arquitetura de Software .NET da FIAP.

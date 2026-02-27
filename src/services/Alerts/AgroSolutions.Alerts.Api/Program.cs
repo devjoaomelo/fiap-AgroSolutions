@@ -8,6 +8,7 @@ using AgroSolutions.Alerts.Infrastructure.Data;
 using AgroSolutions.Alerts.Infrastructure.Repositories;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +63,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
+app.UseHttpMetrics();
 app.MapControllers();
+app.MapMetrics();
 
 app.Run();
