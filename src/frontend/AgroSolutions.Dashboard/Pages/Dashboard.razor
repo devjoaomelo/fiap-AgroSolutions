@@ -7,13 +7,22 @@
 @inject AuthStateService AuthState
 @inject NavigationManager Navigation
 @inject ToastService ToastService
+@implements IDisposable
 
 <PageTitle>Dashboard - AgroSolutions</PageTitle>
 
 <div class="dashboard-header mb-4">
     <div>
         <h2 class="mb-1">Dashboard de Alertas</h2>
-        <p class="text-muted mb-0">Bem-vindo, @AuthState.UserName!</p>
+        <p class="text-muted mb-0">
+            Bem-vindo, @AuthState.UserName!
+            @if (lastUpdate.HasValue)
+            {
+                <span class="ms-3">
+                    🕒 Última atualização: @GetLastUpdateText()
+                </span>
+            }
+        </p>
     </div>
     <div class="d-flex align-items-center gap-3">
         <div class="custom-switch">
@@ -43,7 +52,7 @@
         <div class="col-md-6">
             <label class="form-label fw-semibold">Talhão:</label>
             <select class="form-select" @onchange="OnFieldFilterChanged" disabled="@(selectedPropertyId == null)">
-                <option value="">Talecione o Talhão</option>
+                <option value="">Selecione o Talhão</option>
                 @foreach (var field in filteredFields)
                 {
                     <option value="@field.Id">@field.Name (@field.Culture)</option>
@@ -233,12 +242,30 @@ else
     private string errorMessage = string.Empty;
     private string sortColumn = "CreatedAt";
     private bool sortAscending = false;
+    private DateTime? lastUpdate = null;
 
     private Guid? selectedPropertyId = null;
     private Guid? selectedFieldId = null;
     private bool showResolvedAlerts = true;
     private bool showConfirmModal = false;
     private Guid? alertToResolve = null;
+    private System.Threading.Timer? updateTimer;
+
+    private string GetLastUpdateText()
+    {
+        if (!lastUpdate.HasValue) return "";
+
+        var timeSpan = DateTime.Now - lastUpdate.Value;
+
+        if (timeSpan.TotalSeconds < 60)
+            return "há alguns segundos";
+        else if (timeSpan.TotalMinutes < 60)
+            return $"há {(int)timeSpan.TotalMinutes} minuto(s)";
+        else if (timeSpan.TotalHours < 24)
+            return $"há {(int)timeSpan.TotalHours} hora(s)";
+        else
+            return lastUpdate.Value.ToString("dd/MM/yyyy HH:mm");
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -254,6 +281,19 @@ else
         }
 
         await LoadData();
+    }
+
+    protected override void OnInitialized()
+    {
+        updateTimer = new System.Threading.Timer(async _ =>
+        {
+            await InvokeAsync(() => StateHasChanged());
+        }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+    }
+
+    public void Dispose()
+    {
+        updateTimer?.Dispose();
     }
 
     private async Task LoadData()
@@ -300,6 +340,7 @@ else
         finally
         {
             isLoading = false;
+            lastUpdate = DateTime.Now;
         }
     }
 
