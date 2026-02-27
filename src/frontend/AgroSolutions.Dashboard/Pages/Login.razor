@@ -64,13 +64,11 @@
         {
             isLoading = true;
             errorMessage = string.Empty;
-
             var response = await AuthService.LoginAsync(loginRequest.Email, loginRequest.Password);
-
             if (response != null && !string.IsNullOrEmpty(response.AccessToken))
             {
-                // Usar dados que já vêm na resposta
-                AuthState.SetAuthenticated(
+                // Salvar no localStorage
+                await AuthState.SetAuthenticatedAsync(
                     response.AccessToken,
                     response.UserId,
                     response.Name,

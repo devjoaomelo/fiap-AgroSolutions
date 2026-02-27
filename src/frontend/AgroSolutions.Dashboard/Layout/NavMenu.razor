@@ -1,13 +1,16 @@
 ﻿@using AgroSolutions.Dashboard.Services
 @inject AuthStateService AuthState
+@inject NavigationManager Navigation
 @implements IDisposable
 
 @if (AuthState.IsAuthenticated)
 {
     <div class="top-row ps-3 navbar navbar-dark">
-        <div class="container-fluid">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
             <a class="navbar-brand" href="">🌾 AgroSolutions</a>
-            <button class="btn btn-sm btn-outline-light" @onclick="Logout">Sair</button>
+            <button class="btn btn-sm btn-outline-light" @onclick="Logout">
+                Sair
+            </button>
         </div>
     </div>
 
@@ -33,9 +36,10 @@
         AuthState.OnChange += StateHasChanged;
     }
 
-    private void Logout()
+    private async Task Logout()
     {
-        AuthState.Logout();
+        await AuthState.LogoutAsync();
+        Navigation.NavigateTo("/login");
     }
 
     public void Dispose()

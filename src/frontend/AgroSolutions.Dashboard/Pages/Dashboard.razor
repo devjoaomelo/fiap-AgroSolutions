@@ -213,6 +213,19 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Aguardar inicialização do AuthState
+        while (!AuthState.IsInitialized)
+        {
+            await Task.Delay(50);
+        }
+
+        // Redirecionar se não estiver autenticado
+        if (!AuthState.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
         await LoadData();
     }
 

@@ -1,6 +1,43 @@
-﻿<Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Pages.NotFound)">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-</Router>
+﻿@using AgroSolutions.Dashboard.Services
+@inject AuthStateService AuthState
+@inject NavigationManager Navigation
+
+@if (!isInitialized)
+{
+    <p>Carregando...</p>
+}
+else
+{
+    <Router AppAssembly="@typeof(App).Assembly" OnNavigateAsync="@OnNavigateAsync">
+        <Found Context="routeData">
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>Not found</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p role="alert">Desculpe, não há nada neste endereço.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+}
+
+@code {
+    private bool isInitialized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("[APP] Inicializando AuthState...");
+        await AuthState.InitializeAsync();
+        Console.WriteLine($"[APP] AuthState inicializado. IsAuthenticated: {AuthState.IsAuthenticated}");
+        isInitialized = true;
+    }
+
+    private async Task OnNavigateAsync(NavigationContext context)
+    {
+        if (context.Path == "" && AuthState.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/dashboard", replace: true);
+        }
+    }
+}
