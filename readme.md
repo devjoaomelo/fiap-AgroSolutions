@@ -77,6 +77,7 @@ Sistema distribuído end-to-end que oferece:
     ├─ Grafana (dashboards)
     └─ Seq (logs centralizados)
 ```
+![Veja mais](https://github.com/devjoaomelo/fiap-AgroSolutions/blob/main/docs/architecture/ARCHITECTURE.md)
 
 ### Fluxo de Dados
 
