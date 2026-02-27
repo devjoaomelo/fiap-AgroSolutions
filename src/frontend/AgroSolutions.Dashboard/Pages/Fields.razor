@@ -10,137 +10,211 @@
 
 <PageTitle>Talhões - AgroSolutions</PageTitle>
 
-<div class="container mt-4">
-    <div class="row mb-4">
-        <div class="col">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="/properties">Propriedades</a></li>
-                    <li class="breadcrumb-item active">@propertyName</li>
-                </ol>
-            </nav>
-            <h2>Talhões - @propertyName</h2>
-            <p class="text-muted">Gerencie os talhões desta propriedade</p>
-        </div>
-        <div class="col-auto">
-            <button class="btn btn-primary" @onclick="() => showCreateModal = true">
-                + Novo Talhão
-            </button>
-        </div>
+<div class="mb-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/properties">Propriedades</a></li>
+            <li class="breadcrumb-item active">@propertyName</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="dashboard-header mb-4">
+    <div>
+        <h2 class="mb-1">Talhões - @propertyName</h2>
+        <p class="text-muted mb-0">Gerencie os talhões desta propriedade</p>
     </div>
+    <button class="btn btn-modern btn-modern-primary" @onclick="() => showCreateModal = true">
+        + Novo Talhão
+    </button>
+</div>
 
-    @if (isLoading)
-    {
-        <div class="text-center">
-            <div class="spinner-border" role="status"></div>
-            <p>Carregando...</p>
-        </div>
-    }
-    else if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger">@errorMessage</div>
-    }
-    else if (fields.Count == 0)
-    {
-        <div class="alert alert-info">
-            Nenhum talhão cadastrado. Clique em "Novo Talhão" para começar.
-        </div>
-    }
-    else
-    {
+@if (propertyTotalArea > 0)
+{
+    <div class="filter-section mb-4">
         <div class="row">
-            @foreach (var field in fields)
-            {
-                <div class="col-md-4 mb-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">@field.Name</h5>
-                            <p class="card-text">
-                                <strong>Cultura:</strong> @field.Culture<br />
-                                <strong>Área:</strong> @field.Area.ToString("N2") hectares
-                            </p>
-                            <span class="badge bg-success">Ativo</span>
-                            <button class="btn btn-sm btn-outline-primary mt-2 w-100"
-                                    @onclick="() => SimulateSensorData(field.Id)"
-                                    disabled="@isSimulating">
-                                @if (isSimulating && simulatingFieldId == field.Id)
-                                {
-                                    <span>Simulando...</span>
-                                }
-                                else
-                                {
-                                    <span>Simular Dados de Sensor</span>
-                                }
-                            </button>
-                        </div>
-                    </div>
+            <div class="col-md-4">
+                <div class="area-info">
+                    <span class="area-label">📏 Área Total:</span>
+                    <span class="area-value">@propertyTotalArea.ToString("N2") ha</span>
                 </div>
-            }
-        </div>
-    }
-
-    @if (showCreateModal)
-    {
-        <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Novo Talhão</h5>
-                        <button type="button" class="btn-close" @onclick="CloseModal"></button>
-                    </div>
-                    <div class="modal-body">
-                        @if (!string.IsNullOrEmpty(createError))
-                        {
-                            <div class="alert alert-danger">@createError</div>
-                        }
-                        <EditForm Model="@newField" OnValidSubmit="@CreateField">
-                            <DataAnnotationsValidator />
-
-                            <div class="alert alert-info mb-3">
-                                <strong>Área da Propriedade:</strong> @propertyTotalArea.ToString("N2") ha<br />
-                                <strong>Área Usada:</strong> @usedArea.ToString("N2") ha<br />
-                                <strong>Área Disponível:</strong> @availableArea.ToString("N2") ha
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Nome do Talhão</label>
-                                <InputText @bind-Value="newField.Name" class="form-control" placeholder="Talhão Norte" />
-                                <ValidationMessage For="@(() => newField.Name)" class="text-danger" />
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Cultura</label>
-                                <InputText @bind-Value="newField.Culture" class="form-control" placeholder="Soja, Milho, etc." />
-                                <ValidationMessage For="@(() => newField.Culture)" class="text-danger" />
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Área (hectares)</label>
-                                <InputNumber @bind-Value="newField.Area" class="form-control" />
-                                <ValidationMessage For="@(() => newField.Area)" class="text-danger" />
-                                <small class="text-muted">Máximo disponível: @availableArea.ToString("N2") ha</small>
-                            </div>
-
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancelar</button>
-                                <button type="submit" class="btn btn-primary" disabled="@isCreating">
-                                    @if (isCreating)
-                                    {
-                                        <span>Salvando...</span>
-                                    }
-                                    else
-                                    {
-                                        <span>Salvar</span>
-                                    }
-                                </button>
-                            </div>
-                        </EditForm>
-                    </div>
+            </div>
+            <div class="col-md-4">
+                <div class="area-info">
+                    <span class="area-label">✓ Área Utilizada:</span>
+                    <span class="area-value text-info">@usedArea.ToString("N2") ha</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="area-info">
+                    <span class="area-label">🟢 Área Disponível:</span>
+                    <span class="area-value text-success">@availableArea.ToString("N2") ha</span>
                 </div>
             </div>
         </div>
-    }
-</div>
+    </div>
+}
+
+@if (isLoading)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+        <p class="mt-3 text-muted">Carregando...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+else if (fields.Count == 0)
+{
+    <div class="alert alert-info">
+        Nenhum talhão cadastrado. Clique em "Novo Talhão" para começar.
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var field in fields)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="field-card">
+                    <div class="field-card-header">
+                        <h5 class="mb-0">🌾 @field.Name</h5>
+                    </div>
+                    <div class="field-card-body">
+                        <div class="property-info">
+                            <span class="property-label">🌱 Cultura:</span>
+                            <span class="property-value">@field.Culture</span>
+                        </div>
+                        <div class="property-info">
+                            <span class="property-label">📐 Área:</span>
+                            <span class="property-value">@field.Area.ToString("N2") hectares</span>
+                        </div>
+                        <div class="mt-2">
+                            <span class="badge bg-success">Ativo</span>
+                        </div>
+                    </div>
+                    <div class="field-card-footer">
+                        <button class="btn btn-sm btn-modern-primary w-100 mb-2"
+                                @onclick="() => SimulateSensorData(field.Id)"
+                                disabled="@(isSimulating && simulatingFieldId == field.Id)">
+                            @if (isSimulating && simulatingFieldId == field.Id)
+                            {
+                                <span>Simulando...</span>
+                            }
+                            else
+                            {
+                                <span>📊 Simular Dados de Sensor</span>
+                            }
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger w-100"
+                                @onclick="() => ShowDeleteConfirm(field.Id)">
+                            🗑️ Excluir Talhão
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (showCreateModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Novo Talhão</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(createError))
+                    {
+                        <div class="alert alert-danger">@createError</div>
+                    }
+                    <EditForm Model="@newField" OnValidSubmit="@CreateField">
+                        <DataAnnotationsValidator />
+
+                        <div class="alert alert-info mb-3">
+                            <strong>Área da Propriedade:</strong> @propertyTotalArea.ToString("N2") ha<br />
+                            <strong>Área Usada:</strong> @usedArea.ToString("N2") ha<br />
+                            <strong>Área Disponível:</strong> @availableArea.ToString("N2") ha
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Nome do Talhão</label>
+                            <InputText @bind-Value="newField.Name" class="form-control" placeholder="Talhão Norte" />
+                            <ValidationMessage For="@(() => newField.Name)" class="text-danger" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Cultura</label>
+                            <InputText @bind-Value="newField.Culture" class="form-control" placeholder="Soja, Milho, etc." />
+                            <ValidationMessage For="@(() => newField.Culture)" class="text-danger" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Área (hectares)</label>
+                            <InputNumber @bind-Value="newField.Area" class="form-control" />
+                            <ValidationMessage For="@(() => newField.Area)" class="text-danger" />
+                            <small class="text-muted">Máximo disponível: @availableArea.ToString("N2") ha</small>
+                        </div>
+
+                        <div class="modal-footer px-0 pb-0">
+                            <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancelar</button>
+                            <button type="submit" class="btn btn-modern-primary" disabled="@isCreating">
+                                @if (isCreating)
+                                {
+                                    <span>Salvando...</span>
+                                }
+                                else
+                                {
+                                    <span>Salvar</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showDeleteModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close" @onclick="CloseDeleteModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja excluir este talhão?</p>
+                    <p class="text-muted mb-0">Esta ação não pode ser desfeita.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseDeleteModal">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDelete" disabled="@isDeleting">
+                        @if (isDeleting)
+                        {
+                            <span>Excluindo...</span>
+                        }
+                        else
+                        {
+                            <span>Sim, Excluir</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     [Parameter]
@@ -153,26 +227,22 @@
     private bool showCreateModal = false;
     private string errorMessage = string.Empty;
     private string createError = string.Empty;
+
     private double propertyTotalArea = 0;
     private double usedArea = 0;
     private double availableArea = 0;
+
     private bool isSimulating = false;
     private Guid? simulatingFieldId = null;
 
-    private CreateFieldModel newField = new();
+    private bool showDeleteModal = false;
+    private Guid? fieldToDelete = null;
+    private bool isDeleting = false;
 
-    protected override void OnInitialized()
-    {
-        if (!AuthState.IsAuthenticated)
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-    }
+    private CreateFieldModel newField = new();
 
     protected override async Task OnInitializedAsync()
     {
-        // Aguardar inicialização do AuthState
         while (!AuthState.IsInitialized)
         {
             await Task.Delay(50);
@@ -197,7 +267,6 @@
             propertyName = property?.Name ?? "Propriedade";
             propertyTotalArea = property?.TotalArea ?? 0;
 
-            // Calcular área usada
             usedArea = fields.Sum(f => f.Area);
             availableArea = propertyTotalArea - usedArea;
         }
@@ -216,7 +285,6 @@
             errorMessage = string.Empty;
             fields = await FieldService.GetPropertyFieldsAsync(PropertyId);
 
-            // Recalcular área disponível
             usedArea = fields.Sum(f => f.Area);
             availableArea = propertyTotalArea - usedArea;
         }
@@ -237,7 +305,6 @@
             isCreating = true;
             createError = string.Empty;
 
-            // Validar se a área não excede o disponível
             if (newField.Area > availableArea)
             {
                 ToastService.ShowError($"Área do talhão ({newField.Area:N2} ha) excede a área disponível ({availableArea:N2} ha)");
@@ -279,21 +346,6 @@
         createError = string.Empty;
     }
 
-    private class CreateFieldModel
-    {
-        [Required(ErrorMessage = "Nome é obrigatório")]
-        [MinLength(3, ErrorMessage = "Nome deve ter pelo menos 3 caracteres")]
-        public string Name { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Cultura é obrigatória")]
-        [MinLength(2, ErrorMessage = "Cultura deve ter pelo menos 2 caracteres")]
-        public string Culture { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Área é obrigatória")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Área deve ser maior que zero")]
-        public double Area { get; set; }
-    }
-
     private async Task SimulateSensorData(Guid fieldId)
     {
         try
@@ -321,5 +373,63 @@
             isSimulating = false;
             simulatingFieldId = null;
         }
+    }
+
+    private void ShowDeleteConfirm(Guid fieldId)
+    {
+        fieldToDelete = fieldId;
+        showDeleteModal = true;
+    }
+
+    private void CloseDeleteModal()
+    {
+        fieldToDelete = null;
+        showDeleteModal = false;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (!fieldToDelete.HasValue) return;
+
+        try
+        {
+            isDeleting = true;
+
+            var success = await FieldService.DeleteFieldAsync(fieldToDelete.Value);
+
+            if (success)
+            {
+                ToastService.ShowSuccess("Talhão excluído com sucesso!");
+                CloseDeleteModal();
+                await LoadFields();
+            }
+            else
+            {
+                ToastService.ShowError("Erro ao excluir talhão");
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Erro: {ex.Message}");
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+    private class CreateFieldModel
+    {
+        [Required(ErrorMessage = "Nome é obrigatório")]
+        [MinLength(3, ErrorMessage = "Nome deve ter pelo menos 3 caracteres")]
+        public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Cultura é obrigatória")]
+        [MinLength(2, ErrorMessage = "Cultura deve ter pelo menos 2 caracteres")]
+        public string Culture { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Área é obrigatória")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Área deve ser maior que zero")]
+        public double Area { get; set; }
     }
 }
