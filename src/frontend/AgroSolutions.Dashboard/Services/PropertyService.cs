@@ -47,6 +47,14 @@ public class PropertyService
         return response.IsSuccessStatusCode;
     }
 
+    public async Task<bool> DeletePropertyAsync(Guid propertyId)
+    {
+        SetAuthorizationHeader();
+
+        var response = await _httpClient.DeleteAsync($"api/Properties/{propertyId}");
+        return response.IsSuccessStatusCode;
+    }
+
     private class PropertiesResponse
     {
         public List<Property> Properties { get; set; } = new();

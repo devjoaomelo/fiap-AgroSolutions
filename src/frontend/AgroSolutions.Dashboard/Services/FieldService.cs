@@ -65,7 +65,13 @@ public class FieldService
     {
         public List<Field> Fields { get; set; } = new();
     }
+    public async Task<bool> DeleteFieldAsync(Guid fieldId)
+    {
+        SetAuthorizationHeader();
 
+        var response = await _httpClient.DeleteAsync($"api/Fields/{fieldId}");
+        return response.IsSuccessStatusCode;
+    }
     public async Task<bool> SimulateSensorDataAsync(Guid fieldId)
     {
         SetAuthorizationHeader();

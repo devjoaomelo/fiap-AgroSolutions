@@ -10,30 +10,30 @@
 
 <PageTitle>Dashboard - AgroSolutions</PageTitle>
 
-<div class="container mt-4">
-    <div class="row mb-4">
-        <div class="col">
-            <h2>Dashboard de Alertas</h2>
-            <p class="text-muted">Bem-vindo, @AuthState.UserName! Monitoramento das suas propriedades</p>
-        </div>
-        <div class="col-auto">
-            <div class="form-check form-switch me-3 d-inline-block">
-                <input class="form-check-input" type="checkbox" id="showResolved"
-                       checked="@showResolvedAlerts" @onchange="e => showResolvedAlerts = (bool)e.Value">
-                <label class="form-check-label" for="showResolved">
-                    Mostrar Resolvidos
-                </label>
-            </div>
-            <button class="btn btn-primary" @onclick="LoadData">
-                <span>🔄 Atualizar</span>
-            </button>
-        </div>
+<div class="dashboard-header mb-4">
+    <div>
+        <h2 class="mb-1">Dashboard de Alertas</h2>
+        <p class="text-muted mb-0">Bem-vindo, @AuthState.UserName!</p>
     </div>
-    <div class="row mb-3">
+    <div class="d-flex align-items-center gap-3">
+        <div class="custom-switch">
+            <label class="mb-0">Mostrar Resolvidos</label>
+            <input class="form-check-input" type="checkbox"
+                   checked="@showResolvedAlerts"
+                   @onchange="e => { showResolvedAlerts = (bool)e.Value; StateHasChanged(); }">
+        </div>
+        <button class="btn btn-modern btn-modern-primary" @onclick="LoadData">
+            🔄 Atualizar
+        </button>
+    </div>
+</div>
+
+<div class="filter-section mb-4">
+    <div class="row g-3">
         <div class="col-md-6">
-            <label class="form-label">Filtrar por Propriedade</label>
+            <label class="form-label fw-semibold">🔍 Propriedade:</label>
             <select class="form-select" @onchange="OnPropertyFilterChanged">
-                <option value="">Todas as Propriedades</option>
+                <option value="">Selecione a Propriedade</option>
                 @foreach (var property in userProperties)
                 {
                     <option value="@property.Id">@property.Name</option>
@@ -41,9 +41,9 @@
             </select>
         </div>
         <div class="col-md-6">
-            <label class="form-label">Filtrar por Talhão</label>
+            <label class="form-label fw-semibold">Talhão:</label>
             <select class="form-select" @onchange="OnFieldFilterChanged" disabled="@(selectedPropertyId == null)">
-                <option value="">Todos os Talhões</option>
+                <option value="">Talecione o Talhão</option>
                 @foreach (var field in filteredFields)
                 {
                     <option value="@field.Id">@field.Name (@field.Culture)</option>
@@ -51,151 +51,151 @@
             </select>
         </div>
     </div>
+</div>
 
-    @if (isLoading)
-    {
-        <div class="text-center">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Carregando...</span>
+@if (isLoading)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+        <p class="mt-3 text-muted">Carregando seus dados...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">
+        <strong>Erro:</strong> @errorMessage
+    </div>
+}
+else if (userFields.Count == 0)
+{
+    <div class="alert alert-warning">
+        <strong>Nenhum talhão cadastrado.</strong> Cadastre propriedades e talhões para começar a monitorar.
+    </div>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card stat-card-danger">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">⚠️ Alertas Críticos</div>
+                        <div class="stat-number">@GetFilteredAlerts().Count(a => a.Severity == "Alta" && !a.IsResolved)</div>
+                    </div>
+                </div>
             </div>
-            <p>Carregando seus dados...</p>
         </div>
-    }
-    else if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger">
-            <strong>Erro:</strong> @errorMessage
+        <div class="col-md-3">
+            <div class="stat-card stat-card-warning">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">⚡ Alertas Médios</div>
+                        <div class="stat-number">@GetFilteredAlerts().Count(a => a.Severity == "Média" && !a.IsResolved)</div>
+                    </div>
+                </div>
+            </div>
         </div>
-    }
-    else if (userFields.Count == 0)
-    {
-        <div class="alert alert-warning">
-            <strong>Nenhum talhão cadastrado.</strong> Cadastre propriedades e talhões para começar a monitorar.
+        <div class="col-md-3">
+            <div class="stat-card stat-card-success">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">✓ Resolvidos</div>
+                        <div class="stat-number">@allAlerts.Count(a => a.IsResolved)</div>
+                    </div>
+                </div>
+            </div>
         </div>
-    }
-    else if (GetFilteredAlerts().Count() == 0)
+        <div class="col-md-3">
+            <div class="stat-card stat-card-info">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">🌾 Total de Talhões</div>
+                        <div class="stat-number">@userFields.Count</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (GetFilteredAlerts().Count() == 0)
     {
         <div class="alert alert-info">
-            <strong>Nenhum alerta encontrado.</strong> @(showResolvedAlerts ? "Todas as suas condições estão normais!" : "Desmarque 'Mostrar Resolvidos' para ver todos os alertas.")
+            <strong>Nenhum alerta encontrado.</strong> @(showResolvedAlerts ? "Todas as suas condições estão normais!" : "Ative 'Mostrar Resolvidos' para ver todos os alertas.")
         </div>
     }
     else
     {
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card border-danger">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-1">Alertas Críticos</h6>
-                                <h2 class="mb-0 text-danger">@GetFilteredAlerts().Count(a => a.Severity == "Alta" && !a.IsResolved)</h2>
-                            </div>
-                            <div class="text-danger" style="font-size: 2.5rem;">⚠️</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-warning">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-1">Alertas Médios</h6>
-                                <h2 class="mb-0 text-warning">@GetFilteredAlerts().Count(a => a.Severity == "Média" && !a.IsResolved)</h2>
-                            </div>
-                            <div class="text-warning" style="font-size: 2.5rem;">⚡</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-success">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-1">Resolvidos</h6>
-                                <h2 class="mb-0 text-success">@allAlerts.Count(a => a.IsResolved)</h2>
-                            </div>
-                            <div class="text-success" style="font-size: 2.5rem;">✓</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-info">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-1">Total de Talhões</h6>
-                                <h2 class="mb-0 text-info">@userFields.Count</h2>
-                            </div>
-                            <div class="text-info" style="font-size: 2.5rem;">🌾</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h5>Alertas dos Seus Talhões</h5>
-                <small class="text-muted">Monitorando @userFields.Count talhão(ões) em @userProperties.Count propriedade(s)</small>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Talhão</th>
-                                <th>Tipo</th>
-                                <th>Severidade</th>
-                                <th>Mensagem</th>
-                                <th>Data/Hora</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var alert in GetFilteredAlerts())
-                            {
-                                var field = userFields.FirstOrDefault(f => f.Id == alert.FieldId);
-                                <tr class="@GetRowClass(alert)">
-                                    <td>
-                                        <strong>@(field?.Name ?? "Desconhecido")</strong><br />
-                                        <small class="text-muted">@(field?.Culture ?? "")</small>
-                                    </td>
-                                    <td>
-                                        <span class="badge @GetBadgeClass(alert.Type)">
-                                            @GetAlertIcon(alert.Type) @alert.Type
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge @GetSeverityClass(alert.Severity)">
-                                            @alert.Severity
-                                        </span>
-                                    </td>
-                                    <td>@alert.Message</td>
-                                    <td>@alert.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
-                                    <td>
-                                        @if (alert.IsResolved)
-                                        {
-                                            <span class="badge bg-success">✓ Resolvido</span>
-                                        }
-                                        else
-                                        {
-                                            <button class="btn btn-sm btn-success" @onclick="() => ShowConfirmResolve(alert.Id)">
-                                                Resolver
-                                            </button>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="modern-table">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th @onclick='() => SortBy("Property")' style="cursor: pointer;">
+                            Propriedade @GetSortIcon("Property")
+                        </th>
+                        <th @onclick='() => SortBy("Field")' style="cursor: pointer;">
+                            Nome do Talhão @GetSortIcon("Field")
+                        </th>
+                        <th @onclick='() => SortBy("Type")' style="cursor: pointer;">
+                            Tipo @GetSortIcon("Type")
+                        </th>
+                        <th @onclick='() => SortBy("Severity")' style="cursor: pointer;">
+                            Severidade @GetSortIcon("Severity")
+                        </th>
+                        <th>Mensagem</th>
+                        <th @onclick='() => SortBy("CreatedAt")' style="cursor: pointer;">
+                            DataHora @GetSortIcon("CreatedAt")
+                        </th>
+                        <th @onclick='() => SortBy("Status")' style="cursor: pointer;">
+                            Status @GetSortIcon("Status")
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var alert in GetFilteredAlerts())
+                    {
+                        var field = userFields.FirstOrDefault(f => f.Id == alert.FieldId);
+                        var property = userProperties.FirstOrDefault(p => p.Id == field?.RuralPropertyId);
+                        <tr>
+                            <td>
+                                <strong>@(property?.Name ?? "Desconhecida")</strong>
+                            </td>
+                            <td>
+                                <strong>@(field?.Name ?? "Desconhecido")</strong><br />
+                                <small class="text-muted">@(field?.Culture ?? "")</small>
+                            </td>
+                            <td>
+                                <span class="badge badge-modern @GetBadgeClass(alert.Type)">
+                                    @GetAlertTypeLabel(alert.Type)
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-modern @GetSeverityBadgeClass(alert.Severity)">
+                                    @alert.Severity
+                                </span>
+                            </td>
+                            <td>@alert.Message</td>
+                            <td>@alert.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                @if (alert.IsResolved)
+                                {
+                                    <span class="badge badge-modern bg-success">Resolvido</span>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-modern-success" @onclick="() => ShowConfirmResolve(alert.Id)">
+                                        Resolver
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     }
-</div>
+}
 
 @if (showConfirmModal)
 {
@@ -231,6 +231,8 @@
     private List<Field> filteredFields = new();
     private bool isLoading = true;
     private string errorMessage = string.Empty;
+    private string sortColumn = "CreatedAt";
+    private bool sortAscending = false;
 
     private Guid? selectedPropertyId = null;
     private Guid? selectedFieldId = null;
@@ -240,13 +242,11 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Aguardar inicialização do AuthState
         while (!AuthState.IsInitialized)
         {
             await Task.Delay(50);
         }
 
-        // Redirecionar se não estiver autenticado
         if (!AuthState.IsAuthenticated)
         {
             Navigation.NavigateTo("/login");
@@ -263,11 +263,7 @@
             isLoading = true;
             errorMessage = string.Empty;
 
-            Console.WriteLine($"[DEBUG] UserId: {AuthState.UserId}");
-
-            // 1. Buscar propriedades do usuário
             userProperties = await PropertyService.GetUserPropertiesAsync();
-            Console.WriteLine($"[DEBUG] Properties count: {userProperties.Count}");
 
             if (userProperties.Count == 0)
             {
@@ -277,16 +273,8 @@
                 return;
             }
 
-            // 2. Buscar todos os talhões das propriedades do usuário
             var propertyIds = userProperties.Select(p => p.Id).ToList();
-            Console.WriteLine($"[DEBUG] Property IDs: {string.Join(", ", propertyIds)}");
-
             userFields = await FieldService.GetAllUserFieldsAsync(propertyIds);
-            Console.WriteLine($"[DEBUG] Fields count: {userFields.Count}");
-            foreach (var field in userFields)
-            {
-                Console.WriteLine($"[DEBUG] Field ID: {field.Id}, Name: {field.Name}");
-            }
 
             if (userFields.Count == 0)
             {
@@ -295,24 +283,19 @@
                 return;
             }
 
-            // 3. Buscar alertas apenas dos talhões do usuário
             var tempAlerts = new List<Alert>();
             foreach (var field in userFields)
             {
-                Console.WriteLine($"[DEBUG] Buscando alertas para field: {field.Id}");
                 var fieldAlerts = await AlertService.GetAlertsAsync(field.Id);
-                Console.WriteLine($"[DEBUG] Alertas encontrados: {fieldAlerts.Count}");
                 tempAlerts.AddRange(fieldAlerts);
             }
 
-            Console.WriteLine($"[DEBUG] Total de alertas: {tempAlerts.Count}");
             allAlerts = tempAlerts;
             alerts = allAlerts;
         }
         catch (Exception ex)
         {
             errorMessage = ex.Message;
-            Console.WriteLine($"[DEBUG ERROR] {ex}");
         }
         finally
         {
@@ -336,10 +319,8 @@
             selectedPropertyId = Guid.Parse(value);
             selectedFieldId = null;
 
-            // Filtrar talhões da propriedade selecionada
             filteredFields = userFields.Where(f => f.RuralPropertyId == selectedPropertyId).ToList();
 
-            // Filtrar alertas dos talhões da propriedade
             var fieldIds = filteredFields.Select(f => f.Id).ToList();
             alerts = allAlerts.Where(a => fieldIds.Contains(a.FieldId)).ToList();
         }
@@ -353,7 +334,6 @@
 
         if (string.IsNullOrEmpty(value))
         {
-            // Mostrar todos os alertas da propriedade selecionada
             if (selectedPropertyId.HasValue)
             {
                 var fieldIds = filteredFields.Select(f => f.Id).ToList();
@@ -368,8 +348,6 @@
         else
         {
             selectedFieldId = Guid.Parse(value);
-
-            // Filtrar alertas apenas do talhão selecionado
             alerts = allAlerts.Where(a => a.FieldId == selectedFieldId).ToList();
         }
 
@@ -405,14 +383,12 @@
 
             if (success)
             {
-                // Atualizar a lista local em allAlerts
                 var alert = allAlerts.FirstOrDefault(a => a.Id == alertId);
                 if (alert != null)
                 {
                     alert.IsResolved = true;
                 }
 
-                // Atualizar também na lista filtrada
                 var filteredAlert = alerts.FirstOrDefault(a => a.Id == alertId);
                 if (filteredAlert != null)
                 {
@@ -442,13 +418,31 @@
             filtered = filtered.Where(a => !a.IsResolved);
         }
 
-        return filtered.OrderByDescending(a => a.CreatedAt);
-    }
+        // Aplicar ordenação
+        filtered = sortColumn switch
+        {
+            "Property" => sortAscending
+                ? filtered.OrderBy(a => userProperties.FirstOrDefault(p => p.Id == userFields.FirstOrDefault(f => f.Id == a.FieldId)?.RuralPropertyId)?.Name)
+                : filtered.OrderByDescending(a => userProperties.FirstOrDefault(p => p.Id == userFields.FirstOrDefault(f => f.Id == a.FieldId)?.RuralPropertyId)?.Name),
+            "Field" => sortAscending
+                ? filtered.OrderBy(a => userFields.FirstOrDefault(f => f.Id == a.FieldId)?.Name)
+                : filtered.OrderByDescending(a => userFields.FirstOrDefault(f => f.Id == a.FieldId)?.Name),
+            "Type" => sortAscending
+                ? filtered.OrderBy(a => a.Type)
+                : filtered.OrderByDescending(a => a.Type),
+            "Severity" => sortAscending
+                ? filtered.OrderBy(a => a.Severity)
+                : filtered.OrderByDescending(a => a.Severity),
+            "CreatedAt" => sortAscending
+                ? filtered.OrderBy(a => a.CreatedAt)
+                : filtered.OrderByDescending(a => a.CreatedAt),
+            "Status" => sortAscending
+                ? filtered.OrderBy(a => a.IsResolved)
+                : filtered.OrderByDescending(a => a.IsResolved),
+            _ => filtered.OrderByDescending(a => a.CreatedAt)
+        };
 
-    private string GetRowClass(Alert alert)
-    {
-        if (alert.IsResolved) return "table-secondary";
-        return alert.Severity == "Alta" ? "table-danger" : "table-warning";
+        return filtered;
     }
 
     private string GetBadgeClass(string type)
@@ -462,7 +456,7 @@
         };
     }
 
-    private string GetSeverityClass(string severity)
+    private string GetSeverityBadgeClass(string severity)
     {
         return severity switch
         {
@@ -472,14 +466,33 @@
         };
     }
 
-    private string GetAlertIcon(string type)
+    private string GetAlertTypeLabel(string type)
     {
         return type switch
         {
-            "Seca" => "💧",
-            "AltaTemperatura" => "🌡️",
-            "ChuvaForte" => "🌧️",
-            _ => "⚠️"
+            "Seca" => "Praga",
+            "AltaTemperatura" => "Umidade",
+            "ChuvaForte" => "Doença",
+            _ => type
         };
+    }
+
+    private void SortBy(string column)
+    {
+        if (sortColumn == column)
+        {
+            sortAscending = !sortAscending;
+        }
+        else
+        {
+            sortColumn = column;
+            sortAscending = true;
+        }
+    }
+
+    private string GetSortIcon(string column)
+    {
+        if (sortColumn != column) return "⇅";
+        return sortAscending ? "▲" : "▼";
     }
 }

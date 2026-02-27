@@ -9,114 +9,160 @@
 
 <PageTitle>Minhas Propriedades - AgroSolutions</PageTitle>
 
-<div class="container mt-4">
-    <div class="row mb-4">
-        <div class="col">
-            <h2>Minhas Propriedades</h2>
-            <p class="text-muted">Gerencie suas propriedades rurais</p>
-        </div>
-        <div class="col-auto">
-            <button class="btn btn-primary" @onclick="() => showCreateModal = true">
-                + Nova Propriedade
-            </button>
-        </div>
+<div class="dashboard-header mb-4">
+    <div>
+        <h2 class="mb-1">Minhas Propriedades</h2>
+        <p class="text-muted mb-0">Gerencie suas propriedades rurais</p>
     </div>
+    <button class="btn btn-modern btn-modern-primary" @onclick="() => showCreateModal = true">
+        + Nova Propriedade
+    </button>
+</div>
 
-    @if (isLoading)
-    {
-        <div class="text-center">
-            <div class="spinner-border" role="status"></div>
-            <p>Carregando...</p>
+@if (isLoading)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
         </div>
-    }
-    else if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger">@errorMessage</div>
-    }
-    else if (properties.Count == 0)
-    {
-        <div class="alert alert-info">
-            Nenhuma propriedade cadastrada. Clique em "Nova Propriedade" para começar.
-        </div>
-    }
-    else
-    {
-        <div class="row">
-            @foreach (var property in properties)
-            {
-                <div class="col-md-6 mb-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">@property.Name</h5>
-                            <p class="card-text">
-                                <strong>Localização:</strong> @property.Location<br />
-                                <strong>Área Total:</strong> @property.TotalArea.ToString("N2") hectares
-                            </p>
-                            <a href="/fields/@property.Id" class="btn btn-sm btn-primary">
-                                Ver Talhões
+        <p class="mt-3 text-muted">Carregando...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+else if (properties.Count == 0)
+{
+    <div class="alert alert-info">
+        Nenhuma propriedade cadastrada. Clique em "Nova Propriedade" para começar.
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var property in properties)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="property-card">
+                    <div class="property-card-header">
+                        <h5 class="mb-0">🏡 @property.Name</h5>
+                    </div>
+                    <div class="property-card-body">
+                        <div class="property-info">
+                            <span class="property-label">📍 Localização:</span>
+                            <span class="property-value">@property.Location</span>
+                        </div>
+                        <div class="property-info">
+                            <span class="property-label">📏 Área Total:</span>
+                            <span class="property-value">@property.TotalArea.ToString("N2") hectares</span>
+                        </div>
+                    </div>
+                    <div class="property-card-footer">
+                        <div class="d-flex gap-2">
+                            <a href="/fields/@property.Id" class="btn btn-sm btn-modern-primary flex-fill">
+                                Ver Talhões →
                             </a>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => ShowDeleteConfirm(property.Id)">
+                                🗑️ Deletar Talhão
+                            </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            }
-        </div>
-    }
+        }
+    </div>
+}
 
-    @if (showCreateModal)
-    {
-        <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Nova Propriedade</h5>
-                        <button type="button" class="btn-close" @onclick="CloseModal"></button>
-                    </div>
-                    <div class="modal-body">
-                        @if (!string.IsNullOrEmpty(createError))
-                        {
-                            <div class="alert alert-danger">@createError</div>
-                        }
-                        <EditForm Model="@newProperty" OnValidSubmit="@CreateProperty">
-                            <DataAnnotationsValidator />
+@if (showCreateModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nova Propriedade</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(createError))
+                    {
+                        <div class="alert alert-danger">@createError</div>
+                    }
+                    <EditForm Model="@newProperty" OnValidSubmit="@CreateProperty">
+                        <DataAnnotationsValidator />
 
-                            <div class="mb-3">
-                                <label class="form-label">Nome da Propriedade</label>
-                                <InputText @bind-Value="newProperty.Name" class="form-control" placeholder="Fazenda São José" />
-                                <ValidationMessage For="@(() => newProperty.Name)" class="text-danger" />
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Nome da Propriedade</label>
+                            <InputText @bind-Value="newProperty.Name" class="form-control" placeholder="Fazenda São José" />
+                            <ValidationMessage For="@(() => newProperty.Name)" class="text-danger" />
+                        </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Localização</label>
-                                <InputText @bind-Value="newProperty.Location" class="form-control" placeholder="Campinas, SP" />
-                                <ValidationMessage For="@(() => newProperty.Location)" class="text-danger" />
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Localização</label>
+                            <InputText @bind-Value="newProperty.Location" class="form-control" placeholder="Campinas, SP" />
+                            <ValidationMessage For="@(() => newProperty.Location)" class="text-danger" />
+                        </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Área Total (hectares)</label>
-                                <InputNumber @bind-Value="newProperty.TotalArea" class="form-control" />
-                                <ValidationMessage For="@(() => newProperty.TotalArea)" class="text-danger" />
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Área Total (hectares)</label>
+                            <InputNumber @bind-Value="newProperty.TotalArea" class="form-control" />
+                            <ValidationMessage For="@(() => newProperty.TotalArea)" class="text-danger" />
+                        </div>
 
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancelar</button>
-                                <button type="submit" class="btn btn-primary" disabled="@isCreating">
-                                    @if (isCreating)
-                                    {
-                                        <span>Salvando...</span>
-                                    }
-                                    else
-                                    {
-                                        <span>Salvar</span>
-                                    }
-                                </button>
-                            </div>
-                        </EditForm>
-                    </div>
+                        <div class="modal-footer px-0 pb-0">
+                            <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancelar</button>
+                            <button type="submit" class="btn btn-modern-primary" disabled="@isCreating">
+                                @if (isCreating)
+                                {
+                                    <span>Salvando...</span>
+                                }
+                                else
+                                {
+                                    <span>Salvar</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
                 </div>
             </div>
         </div>
-    }
-</div>
+    </div>
+}
+
+@if (showDeleteModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close" @onclick="CloseDeleteModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja excluir esta propriedade?</p>
+                    <p class="text-danger mb-0">
+                        <strong>Atenção:</strong> Todos os talhões desta propriedade também serão excluídos!
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseDeleteModal">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDelete" disabled="@isDeleting">
+                        @if (isDeleting)
+                        {
+                            <span>Excluindo...</span>
+                        }
+                        else
+                        {
+                            <span>Sim, Excluir</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     private List<Property> properties = new();
@@ -125,21 +171,14 @@
     private bool showCreateModal = false;
     private string errorMessage = string.Empty;
     private string createError = string.Empty;
+    private bool showDeleteModal = false;
+    private Guid? propertyToDelete = null;
+    private bool isDeleting = false;
 
     private CreatePropertyModel newProperty = new();
 
-    protected override void OnInitialized()
-    {
-        if (!AuthState.IsAuthenticated)
-        {
-            Navigation.NavigateTo("/login");
-            return;
-        }
-    }
-
     protected override async Task OnInitializedAsync()
     {
-        // Aguardar inicialização do AuthState
         while (!AuthState.IsInitialized)
         {
             await Task.Delay(50);
@@ -203,6 +242,49 @@
         finally
         {
             isCreating = false;
+        }
+    }
+
+    private void ShowDeleteConfirm(Guid propertyId)
+    {
+        propertyToDelete = propertyId;
+        showDeleteModal = true;
+    }
+
+    private void CloseDeleteModal()
+    {
+        propertyToDelete = null;
+        showDeleteModal = false;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (!propertyToDelete.HasValue) return;
+
+        try
+        {
+            isDeleting = true;
+
+            var success = await PropertyService.DeletePropertyAsync(propertyToDelete.Value);
+
+            if (success)
+            {
+                ToastService.ShowSuccess("Propriedade excluída com sucesso!");
+                CloseDeleteModal();
+                await LoadProperties();
+            }
+            else
+            {
+                ToastService.ShowError("Erro ao excluir propriedade");
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Erro: {ex.Message}");
+        }
+        finally
+        {
+            isDeleting = false;
         }
     }
 
