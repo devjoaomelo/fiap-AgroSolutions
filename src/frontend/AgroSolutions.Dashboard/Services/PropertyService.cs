@@ -31,6 +31,21 @@ public class PropertyService
                 new AuthenticationHeaderValue("Bearer", _authState.Token);
         }
     }
+    public async Task<bool> CreatePropertyAsync(string name, string location, double totalArea)
+    {
+        SetAuthorizationHeader();
+
+        var request = new
+        {
+            UserId = _authState.UserId,
+            Name = name,
+            Location = location,
+            TotalArea = totalArea
+        };
+
+        var response = await _httpClient.PostAsJsonAsync("api/Properties", request);
+        return response.IsSuccessStatusCode;
+    }
 
     private class PropertiesResponse
     {

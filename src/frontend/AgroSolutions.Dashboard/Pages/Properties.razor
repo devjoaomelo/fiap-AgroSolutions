@@ -1,0 +1,199 @@
+﻿@page "/properties"
+@using AgroSolutions.Dashboard.Services
+@using AgroSolutions.Dashboard.Models
+@inject PropertyService PropertyService
+@inject AuthStateService AuthState
+@inject NavigationManager Navigation
+
+<PageTitle>Minhas Propriedades - AgroSolutions</PageTitle>
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Minhas Propriedades</h2>
+            <p class="text-muted">Gerencie suas propriedades rurais</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" @onclick="() => showCreateModal = true">
+                + Nova Propriedade
+            </button>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status"></div>
+            <p>Carregando...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+    else if (properties.Count == 0)
+    {
+        <div class="alert alert-info">
+            Nenhuma propriedade cadastrada. Clique em "Nova Propriedade" para começar.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var property in properties)
+            {
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">@property.Name</h5>
+                            <p class="card-text">
+                                <strong>Localização:</strong> @property.Location<br />
+                                <strong>Área Total:</strong> @property.TotalArea.ToString("N2") hectares
+                            </p>
+                            <a href="/fields/@property.Id" class="btn btn-sm btn-primary">
+                                Ver Talhões
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (showCreateModal)
+    {
+        <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Nova Propriedade</h5>
+                        <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        @if (!string.IsNullOrEmpty(createError))
+                        {
+                            <div class="alert alert-danger">@createError</div>
+                        }
+                        <EditForm Model="@newProperty" OnValidSubmit="@CreateProperty">
+                            <div class="mb-3">
+                                <label class="form-label">Nome da Propriedade</label>
+                                <InputText @bind-Value="newProperty.Name" class="form-control" placeholder="Fazenda São José" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Localização</label>
+                                <InputText @bind-Value="newProperty.Location" class="form-control" placeholder="Campinas, SP" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Área Total (hectares)</label>
+                                <InputNumber @bind-Value="newProperty.TotalArea" class="form-control" />
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary" disabled="@isCreating">
+                                    @if (isCreating)
+                                    {
+                                        <span>Salvando...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Salvar</span>
+                                    }
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Property> properties = new();
+    private bool isLoading = true;
+    private bool isCreating = false;
+    private bool showCreateModal = false;
+    private string errorMessage = string.Empty;
+    private string createError = string.Empty;
+
+    private CreatePropertyModel newProperty = new();
+
+    protected override void OnInitialized()
+    {
+        if (!AuthState.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProperties();
+    }
+
+    private async Task LoadProperties()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+            properties = await PropertyService.GetUserPropertiesAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CreateProperty()
+    {
+        try
+        {
+            isCreating = true;
+            createError = string.Empty;
+
+            var success = await PropertyService.CreatePropertyAsync(
+                newProperty.Name,
+                newProperty.Location,
+                newProperty.TotalArea
+            );
+
+            if (success)
+            {
+                CloseModal();
+                await LoadProperties();
+            }
+            else
+            {
+                createError = "Erro ao criar propriedade";
+            }
+        }
+        catch (Exception ex)
+        {
+            createError = ex.Message;
+        }
+        finally
+        {
+            isCreating = false;
+        }
+    }
+
+    private void CloseModal()
+    {
+        showCreateModal = false;
+        newProperty = new CreatePropertyModel();
+        createError = string.Empty;
+    }
+
+    private class CreatePropertyModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public double TotalArea { get; set; }
+    }
+}
