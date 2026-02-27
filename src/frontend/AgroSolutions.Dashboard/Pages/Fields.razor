@@ -60,6 +60,18 @@
                                 <strong>Área:</strong> @field.Area.ToString("N2") hectares
                             </p>
                             <span class="badge bg-success">Ativo</span>
+                            <button class="btn btn-sm btn-outline-primary mt-2 w-100"
+                                    @onclick="() => SimulateSensorData(field.Id)"
+                                    disabled="@isSimulating">
+                                @if (isSimulating && simulatingFieldId == field.Id)
+                                {
+                                    <span>Simulando...</span>
+                                }
+                                else
+                                {
+                                    <span>Simular Dados de Sensor</span>
+                                }
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -144,6 +156,8 @@
     private double propertyTotalArea = 0;
     private double usedArea = 0;
     private double availableArea = 0;
+    private bool isSimulating = false;
+    private Guid? simulatingFieldId = null;
 
     private CreateFieldModel newField = new();
 
@@ -278,5 +292,34 @@
         [Required(ErrorMessage = "Área é obrigatória")]
         [Range(0.01, double.MaxValue, ErrorMessage = "Área deve ser maior que zero")]
         public double Area { get; set; }
+    }
+
+    private async Task SimulateSensorData(Guid fieldId)
+    {
+        try
+        {
+            isSimulating = true;
+            simulatingFieldId = fieldId;
+
+            var success = await FieldService.SimulateSensorDataAsync(fieldId);
+
+            if (success)
+            {
+                ToastService.ShowSuccess("Dados de sensor simulados com sucesso! Verifique o Dashboard.");
+            }
+            else
+            {
+                ToastService.ShowError("Erro ao simular dados de sensor");
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Erro: {ex.Message}");
+        }
+        finally
+        {
+            isSimulating = false;
+            simulatingFieldId = null;
+        }
     }
 }

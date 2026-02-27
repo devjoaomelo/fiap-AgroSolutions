@@ -65,4 +65,23 @@ public class FieldService
     {
         public List<Field> Fields { get; set; } = new();
     }
+
+    public async Task<bool> SimulateSensorDataAsync(Guid fieldId)
+    {
+        SetAuthorizationHeader();
+
+        var random = new Random();
+
+        // Gerar dados aleatórios que podem criar alertas
+        var sensorData = new
+        {
+            FieldId = fieldId,
+            SoilMoisture = random.Next(5, 80),        // 5-80%
+            Temperature = random.Next(20, 50),        // 20-50°C
+            Precipitation = random.Next(0, 100)       // 0-100mm
+        };
+
+        var response = await _httpClient.PostAsJsonAsync("http://localhost:5003/api/sensordata", sensorData);
+        return response.IsSuccessStatusCode;
+    }
 }
