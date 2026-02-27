@@ -4,7 +4,7 @@ namespace AgroSolutions.Dashboard.Models;
 
 public class Field
 {
-    [JsonPropertyName("id")]
+    [JsonPropertyName("fieldId")]
     public Guid Id { get; set; }
 
     [JsonPropertyName("ruralPropertyId")]

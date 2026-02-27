@@ -166,8 +166,11 @@
             isLoading = true;
             errorMessage = string.Empty;
 
+            Console.WriteLine($"[DEBUG] UserId: {AuthState.UserId}");
+
             // 1. Buscar propriedades do usuário
             userProperties = await PropertyService.GetUserPropertiesAsync();
+            Console.WriteLine($"[DEBUG] Properties count: {userProperties.Count}");
 
             if (userProperties.Count == 0)
             {
@@ -178,7 +181,14 @@
 
             // 2. Buscar todos os talhões das propriedades do usuário
             var propertyIds = userProperties.Select(p => p.Id).ToList();
+            Console.WriteLine($"[DEBUG] Property IDs: {string.Join(", ", propertyIds)}");
+
             userFields = await FieldService.GetAllUserFieldsAsync(propertyIds);
+            Console.WriteLine($"[DEBUG] Fields count: {userFields.Count}");
+            foreach (var field in userFields)
+            {
+                Console.WriteLine($"[DEBUG] Field ID: {field.Id}, Name: {field.Name}");
+            }
 
             if (userFields.Count == 0)
             {
@@ -190,15 +200,19 @@
             var allAlerts = new List<Alert>();
             foreach (var field in userFields)
             {
+                Console.WriteLine($"[DEBUG] Buscando alertas para field: {field.Id}");
                 var fieldAlerts = await AlertService.GetAlertsAsync(field.Id);
+                Console.WriteLine($"[DEBUG] Alertas encontrados: {fieldAlerts.Count}");
                 allAlerts.AddRange(fieldAlerts);
             }
 
+            Console.WriteLine($"[DEBUG] Total de alertas: {allAlerts.Count}");
             alerts = allAlerts;
         }
         catch (Exception ex)
         {
             errorMessage = ex.Message;
+            Console.WriteLine($"[DEBUG ERROR] {ex}");
         }
         finally
         {
