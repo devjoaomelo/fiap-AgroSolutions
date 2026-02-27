@@ -124,7 +124,9 @@
                                         }
                                         else
                                         {
-                                            <span class="badge bg-warning">⚠ Ativo</span>
+                                            <button class="btn btn-sm btn-success" @onclick="() => ResolveAlert(alert.Id)">
+                                                Resolver
+                                            </button>
                                         }
                                     </td>
                                 </tr>
@@ -256,5 +258,33 @@
             "ChuvaForte" => "🌧️",
             _ => "⚠️"
         };
+    }
+    private async Task ResolveAlert(Guid alertId)
+    {
+        try
+        {
+            var success = await AlertService.ResolveAlertAsync(alertId);
+
+            if (success)
+            {
+                // Atualizar a lista local
+                var alert = alerts.FirstOrDefault(a => a.Id == alertId);
+                if (alert != null)
+                {
+                    alert.IsResolved = true;
+                }
+
+                // Forçar re-render
+                StateHasChanged();
+            }
+            else
+            {
+                errorMessage = "Erro ao resolver alerta";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro: {ex.Message}";
+        }
     }
 }
