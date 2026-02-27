@@ -1,5 +1,7 @@
 using AgroSolutions.Property.Application.UseCases.CreateField;
 using AgroSolutions.Property.Application.UseCases.CreateRuralProperty;
+using AgroSolutions.Property.Application.UseCases.DeleteField;
+using AgroSolutions.Property.Application.UseCases.DeleteRuralProperty;
 using AgroSolutions.Property.Application.UseCases.GetFieldsByProperty;
 using AgroSolutions.Property.Application.UseCases.GetRuralProperties;
 using AgroSolutions.Property.Domain.Interfaces;
@@ -22,6 +24,8 @@ builder.Services.AddScoped<CreateRuralPropertyHandler>();
 builder.Services.AddScoped<CreateFieldHandler>();
 builder.Services.AddScoped<GetRuralPropertiesHandler>();
 builder.Services.AddScoped<GetFieldsByPropertyHandler>();
+builder.Services.AddScoped<DeleteRuralPropertyHandler>();
+builder.Services.AddScoped<DeleteFieldHandler>();
 
 // Controllers
 builder.Services.AddControllers();

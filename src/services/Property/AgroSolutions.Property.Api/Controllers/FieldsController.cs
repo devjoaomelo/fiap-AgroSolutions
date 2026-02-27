@@ -1,4 +1,5 @@
 ﻿using AgroSolutions.Property.Application.UseCases.CreateField;
+using AgroSolutions.Property.Application.UseCases.DeleteField;
 using AgroSolutions.Property.Application.UseCases.GetFieldsByProperty;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,13 +11,16 @@ public class FieldsController : ControllerBase
 {
     private readonly CreateFieldHandler _createFieldHandler;
     private readonly GetFieldsByPropertyHandler _getFieldsByPropertyHandler;
+    private readonly DeleteFieldHandler _deleteFieldHandler;
 
     public FieldsController(
         CreateFieldHandler createFieldHandler,
-        GetFieldsByPropertyHandler getFieldsByPropertyHandler)
+        GetFieldsByPropertyHandler getFieldsByPropertyHandler,
+        DeleteFieldHandler deleteFieldHandler)
     {
         _createFieldHandler = createFieldHandler;
         _getFieldsByPropertyHandler = getFieldsByPropertyHandler;
+        _deleteFieldHandler = deleteFieldHandler;
     }
 
     [HttpPost]
@@ -42,5 +46,23 @@ public class FieldsController : ControllerBase
     {
         var response = await _getFieldsByPropertyHandler.Handle(new GetFieldsByPropertyRequest(propertyId));
         return Ok(response);
+    }
+
+    [HttpDelete("{fieldId}")]
+    public async Task<IActionResult> Delete(Guid fieldId)
+    {
+        try
+        {
+            var response = await _deleteFieldHandler.Handle(new DeleteFieldRequest(fieldId));
+            return Ok(response);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }

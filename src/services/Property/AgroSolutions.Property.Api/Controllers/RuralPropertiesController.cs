@@ -1,4 +1,5 @@
 ﻿using AgroSolutions.Property.Application.UseCases.CreateRuralProperty;
+using AgroSolutions.Property.Application.UseCases.DeleteRuralProperty;
 using AgroSolutions.Property.Application.UseCases.GetRuralProperties;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,13 +11,16 @@ public class PropertiesController : ControllerBase
 {
     private readonly CreateRuralPropertyHandler _createRuralPropertyHandler;
     private readonly GetRuralPropertiesHandler _getRuralPropertiesHandler;
+    private readonly DeleteRuralPropertyHandler _deleteRuralPropertyHandler;
 
     public PropertiesController(
         CreateRuralPropertyHandler createPropertyHandler,
-        GetRuralPropertiesHandler getRuralPropertiesHandler)
+        GetRuralPropertiesHandler getRuralPropertiesHandler,
+        DeleteRuralPropertyHandler deleteRuralPropertyHandler)
     {
         _createRuralPropertyHandler = createPropertyHandler;
         _getRuralPropertiesHandler = getRuralPropertiesHandler;
+        _deleteRuralPropertyHandler = deleteRuralPropertyHandler;
     }
 
     [HttpPost]
@@ -38,5 +42,23 @@ public class PropertiesController : ControllerBase
     {
         var response = await _getRuralPropertiesHandler.Handle(new GetRuralPropertiesRequest(userId));
         return Ok(response);
+    }
+
+    [HttpDelete("{propertyId}")]
+    public async Task<IActionResult> Delete(Guid propertyId)
+    {
+        try
+        {
+            var response = await _deleteRuralPropertyHandler.Handle(new DeleteRuralPropertyRequest(propertyId));
+            return Ok(response);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }
