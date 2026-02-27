@@ -3,6 +3,7 @@
 @using AgroSolutions.Dashboard.Services
 @using AgroSolutions.Dashboard.Models
 @using System.ComponentModel.DataAnnotations
+@inject ToastService ToastService
 @inject AuthService AuthService
 @inject NavigationManager Navigation
 
@@ -19,11 +20,6 @@
                     @if (!string.IsNullOrEmpty(errorMessage))
                     {
                         <div class="alert alert-danger">@errorMessage</div>
-                    }
-
-                    @if (!string.IsNullOrEmpty(successMessage))
-                    {
-                        <div class="alert alert-success">@successMessage</div>
                     }
 
                     <EditForm Model="@registerRequest" OnValidSubmit="@HandleRegister">
@@ -73,7 +69,6 @@
 @code {
     private RegisterRequest registerRequest = new();
     private string errorMessage = string.Empty;
-    private string successMessage = string.Empty;
     private bool isLoading = false;
 
     private class RegisterRequest
@@ -99,14 +94,13 @@
         {
             isLoading = true;
             errorMessage = string.Empty;
-            successMessage = string.Empty;
 
             var success = await AuthService.RegisterAsync(registerRequest.Name, registerRequest.Email, registerRequest.Password);
 
             if (success)
             {
-                successMessage = "Conta criada com sucesso! Redirecionando para login...";
-                await Task.Delay(2000);
+                // Mostrar toast e redirecionar imediatamente
+                ToastService.ShowSuccess("Conta criada com sucesso!");
                 Navigation.NavigateTo("/login");
             }
             else

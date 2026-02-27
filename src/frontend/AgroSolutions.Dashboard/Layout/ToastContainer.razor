@@ -1,0 +1,105 @@
+﻿@using AgroSolutions.Dashboard.Services
+@inject ToastService ToastService
+@implements IDisposable
+
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    @foreach (var toast in toasts)
+    {
+        <div class="toast show @GetToastClass(toast.Type)" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto">
+                    @GetToastIcon(toast.Type) @GetToastTitle(toast.Type)
+                </strong>
+                <button type="button" class="btn-close" @onclick="() => RemoveToast(toast)"></button>
+            </div>
+            <div class="toast-body">
+                @toast.Message
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<ToastMessage> toasts = new();
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnShow += ShowToast;
+    }
+
+    private void ShowToast(string message, ToastType type)
+    {
+        Console.WriteLine($"[TOAST CONTAINER] ShowToast called: {message}, Type: {type}");
+
+        var toast = new ToastMessage
+        {
+            Id = Guid.NewGuid(),
+            Message = message,
+            Type = type
+        };
+
+        toasts.Add(toast);
+        Console.WriteLine($"[TOAST CONTAINER] Toast added. Total toasts: {toasts.Count}");
+        StateHasChanged();
+
+        Task.Run(async () =>
+        {
+            await Task.Delay(4000);
+            await InvokeAsync(() =>
+            {
+                RemoveToast(toast);
+            });
+        });
+    }
+
+    private void RemoveToast(ToastMessage toast)
+    {
+        toasts.Remove(toast);
+        StateHasChanged();
+    }
+
+    private string GetToastClass(ToastType type)
+    {
+        return type switch
+        {
+            ToastType.Success => "bg-success text-white",
+            ToastType.Error => "bg-danger text-white",
+            ToastType.Info => "bg-info text-white",
+            _ => ""
+        };
+    }
+
+    private string GetToastIcon(ToastType type)
+    {
+        return type switch
+        {
+            ToastType.Success => "✓",
+            ToastType.Error => "✗",
+            ToastType.Info => "ℹ",
+            _ => ""
+        };
+    }
+
+    private string GetToastTitle(ToastType type)
+    {
+        return type switch
+        {
+            ToastType.Success => "Sucesso",
+            ToastType.Error => "Erro",
+            ToastType.Info => "Informação",
+            _ => ""
+        };
+    }
+
+    public void Dispose()
+    {
+        ToastService.OnShow -= ShowToast;
+    }
+
+    private class ToastMessage
+    {
+        public Guid Id { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public ToastType Type { get; set; }
+    }
+}

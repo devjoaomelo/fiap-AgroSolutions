@@ -7,8 +7,8 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// Registrar AuthStateService como Singleton
 builder.Services.AddSingleton<AuthStateService>();
+builder.Services.AddSingleton<ToastService>();
 
 // Configurar HttpClient para Property API
 builder.Services.AddHttpClient<PropertyService>(client =>
