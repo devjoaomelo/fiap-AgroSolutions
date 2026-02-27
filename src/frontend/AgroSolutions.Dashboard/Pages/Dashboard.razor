@@ -51,28 +51,56 @@
     }
     else
     {
-        <div class="row mb-3">
-            <div class="col-md-4">
-                <div class="card text-white bg-danger">
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card border-danger">
                     <div class="card-body">
-                        <h5 class="card-title">Alertas Críticos</h5>
-                        <h2>@alerts.Count(a => a.Severity == "Alta" && !a.IsResolved)</h2>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">Alertas Críticos</h6>
+                                <h2 class="mb-0 text-danger">@alerts.Count(a => a.Severity == "Alta" && !a.IsResolved)</h2>
+                            </div>
+                            <div class="text-danger" style="font-size: 2.5rem;">⚠️</div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card text-white bg-warning">
+            <div class="col-md-3">
+                <div class="card border-warning">
                     <div class="card-body">
-                        <h5 class="card-title">Alertas Médios</h5>
-                        <h2>@alerts.Count(a => a.Severity == "Média" && !a.IsResolved)</h2>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">Alertas Médios</h6>
+                                <h2 class="mb-0 text-warning">@alerts.Count(a => a.Severity == "Média" && !a.IsResolved)</h2>
+                            </div>
+                            <div class="text-warning" style="font-size: 2.5rem;">⚡</div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card text-white bg-success">
+            <div class="col-md-3">
+                <div class="card border-success">
                     <div class="card-body">
-                        <h5 class="card-title">Resolvidos</h5>
-                        <h2>@alerts.Count(a => a.IsResolved)</h2>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">Resolvidos</h6>
+                                <h2 class="mb-0 text-success">@alerts.Count(a => a.IsResolved)</h2>
+                            </div>
+                            <div class="text-success" style="font-size: 2.5rem;">✓</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-info">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-1">Total de Talhões</h6>
+                                <h2 class="mb-0 text-info">@userFields.Count</h2>
+                            </div>
+                            <div class="text-info" style="font-size: 2.5rem;">🌾</div>
+                        </div>
                     </div>
                 </div>
             </div>
