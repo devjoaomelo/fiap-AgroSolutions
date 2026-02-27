@@ -21,6 +21,8 @@ Sistema completo de monitoramento agrícola baseado em IoT para otimização de 
 
 A AgroSolutions é uma plataforma completa de agricultura 4.0 que coleta dados de sensores IoT no campo, processa alertas inteligentes e fornece um dashboard interativo para os produtores rurais tomarem decisões informadas sobre irrigação, controle de temperatura e gestão de precipitação.
 
+![Dashboard](docs/images/dashboard.png)
+
 ### Problema Resolvido
 
 - **Desperdício de recursos**: Irrigação sem dados em tempo real
