@@ -45,6 +45,22 @@ public class FieldService
         }
     }
 
+    public async Task<bool> CreateFieldAsync(Guid propertyId, string name, string culture, double area)
+    {
+        SetAuthorizationHeader();
+
+        var request = new
+        {
+            RuralPropertyId = propertyId,
+            Name = name,
+            Culture = culture,
+            Area = area
+        };
+
+        var response = await _httpClient.PostAsJsonAsync("api/Fields", request);
+        return response.IsSuccessStatusCode;
+    }
+
     private class FieldsResponse
     {
         public List<Field> Fields { get; set; } = new();

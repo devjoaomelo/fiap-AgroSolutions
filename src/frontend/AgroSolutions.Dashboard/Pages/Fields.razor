@@ -1,0 +1,224 @@
+﻿@page "/fields/{PropertyId:guid}"
+@using AgroSolutions.Dashboard.Services
+@using AgroSolutions.Dashboard.Models
+@inject FieldService FieldService
+@inject PropertyService PropertyService
+@inject AuthStateService AuthState
+@inject NavigationManager Navigation
+
+<PageTitle>Talhões - AgroSolutions</PageTitle>
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/properties">Propriedades</a></li>
+                    <li class="breadcrumb-item active">@propertyName</li>
+                </ol>
+            </nav>
+            <h2>Talhões - @propertyName</h2>
+            <p class="text-muted">Gerencie os talhões desta propriedade</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" @onclick="() => showCreateModal = true">
+                + Novo Talhão
+            </button>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status"></div>
+            <p>Carregando...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+    else if (fields.Count == 0)
+    {
+        <div class="alert alert-info">
+            Nenhum talhão cadastrado. Clique em "Novo Talhão" para começar.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var field in fields)
+            {
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">@field.Name</h5>
+                            <p class="card-text">
+                                <strong>Cultura:</strong> @field.Culture<br />
+                                <strong>Área:</strong> @field.Area.ToString("N2") hectares
+                            </p>
+                            <span class="badge bg-success">Ativo</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (showCreateModal)
+    {
+        <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Novo Talhão</h5>
+                        <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        @if (!string.IsNullOrEmpty(createError))
+                        {
+                            <div class="alert alert-danger">@createError</div>
+                        }
+                        <EditForm Model="@newField" OnValidSubmit="@CreateField">
+                            <div class="mb-3">
+                                <label class="form-label">Nome do Talhão</label>
+                                <InputText @bind-Value="newField.Name" class="form-control" placeholder="Talhão Norte" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Cultura</label>
+                                <InputText @bind-Value="newField.Culture" class="form-control" placeholder="Soja, Milho, etc." />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Área (hectares)</label>
+                                <InputNumber @bind-Value="newField.Area" class="form-control" />
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary" disabled="@isCreating">
+                                    @if (isCreating)
+                                    {
+                                        <span>Salvando...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Salvar</span>
+                                    }
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public Guid PropertyId { get; set; }
+
+    private List<Field> fields = new();
+    private string propertyName = "";
+    private bool isLoading = true;
+    private bool isCreating = false;
+    private bool showCreateModal = false;
+    private string errorMessage = string.Empty;
+    private string createError = string.Empty;
+
+    private CreateFieldModel newField = new();
+
+    protected override void OnInitialized()
+    {
+        if (!AuthState.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPropertyName();
+        await LoadFields();
+    }
+
+    private async Task LoadPropertyName()
+    {
+        try
+        {
+            var properties = await PropertyService.GetUserPropertiesAsync();
+            var property = properties.FirstOrDefault(p => p.Id == PropertyId);
+            propertyName = property?.Name ?? "Propriedade";
+        }
+        catch
+        {
+            propertyName = "Propriedade";
+        }
+    }
+
+    private async Task LoadFields()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+            fields = await FieldService.GetPropertyFieldsAsync(PropertyId);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CreateField()
+    {
+        try
+        {
+            isCreating = true;
+            createError = string.Empty;
+
+            var success = await FieldService.CreateFieldAsync(
+                PropertyId,
+                newField.Name,
+                newField.Culture,
+                newField.Area
+            );
+
+            if (success)
+            {
+                CloseModal();
+                await LoadFields();
+            }
+            else
+            {
+                createError = "Erro ao criar talhão";
+            }
+        }
+        catch (Exception ex)
+        {
+            createError = ex.Message;
+        }
+        finally
+        {
+            isCreating = false;
+        }
+    }
+
+    private void CloseModal()
+    {
+        showCreateModal = false;
+        newField = new CreateFieldModel();
+        createError = string.Empty;
+    }
+
+    private class CreateFieldModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Culture { get; set; } = string.Empty;
+        public double Area { get; set; }
+    }
+}
