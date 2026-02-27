@@ -17,10 +17,18 @@
             <p class="text-muted">Bem-vindo, @AuthState.UserName! Monitoramento das suas propriedades</p>
         </div>
         <div class="col-auto">
+            <div class="form-check form-switch me-3 d-inline-block">
+                <input class="form-check-input" type="checkbox" id="showResolved"
+                       checked="@showResolvedAlerts" @onchange="e => showResolvedAlerts = (bool)e.Value">
+                <label class="form-check-label" for="showResolved">
+                    Mostrar Resolvidos
+                </label>
+            </div>
             <button class="btn btn-primary" @onclick="LoadData">
                 <span>🔄 Atualizar</span>
             </button>
         </div>
+    </div>
     </div>
 
     <div class="row mb-3">
@@ -149,7 +157,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var alert in alerts.OrderByDescending(a => a.CreatedAt))
+                            @foreach (var alert in GetFilteredAlerts())
                             {
                                 var field = userFields.FirstOrDefault(f => f.Id == alert.FieldId);
                                 <tr class="@GetRowClass(alert)">
@@ -189,7 +197,7 @@
             </div>
         </div>
     }
-</div>
+
 
 @code {
     private List<Alert> alerts = new();
@@ -199,6 +207,7 @@
     private List<Field> filteredFields = new();
     private bool isLoading = true;
     private string errorMessage = string.Empty;
+    private bool showResolvedAlerts = true;
 
     private Guid? selectedPropertyId = null;
     private Guid? selectedFieldId = null;
@@ -422,5 +431,16 @@
             "ChuvaForte" => "🌧️",
             _ => "⚠️"
         };
+    }
+    private IEnumerable<Alert> GetFilteredAlerts()
+    {
+        var filtered = alerts.AsEnumerable();
+
+        if (!showResolvedAlerts)
+        {
+            filtered = filtered.Where(a => !a.IsResolved);
+        }
+
+        return filtered.OrderByDescending(a => a.CreatedAt);
     }
 }
