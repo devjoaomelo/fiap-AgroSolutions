@@ -51,21 +51,6 @@
 </div>
 
 @code {
-    protected override async Task OnInitializedAsync()
-    {
-        // Aguardar inicialização
-        while (!AuthState.IsInitialized)
-        {
-            await Task.Delay(50);
-        }
-
-        // Se já estiver logado, ir direto pro dashboard
-        if (AuthState.IsAuthenticated)
-        {
-            Navigation.NavigateTo("/dashboard", forceLoad: true);
-        }
-    }
-
     private void GoToLogin()
     {
         Navigation.NavigateTo("/login");

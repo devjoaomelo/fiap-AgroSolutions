@@ -2,6 +2,7 @@
 @layout PublicLayout
 @using AgroSolutions.Dashboard.Services
 @using AgroSolutions.Dashboard.Models
+@using System.ComponentModel.DataAnnotations
 @inject AuthService AuthService
 @inject NavigationManager Navigation
 
@@ -26,19 +27,24 @@
                     }
 
                     <EditForm Model="@registerRequest" OnValidSubmit="@HandleRegister">
+                        <DataAnnotationsValidator />
+
                         <div class="mb-3">
                             <label class="form-label">Nome Completo</label>
                             <InputText @bind-Value="registerRequest.Name" class="form-control" placeholder="João Silva" />
+                            <ValidationMessage For="@(() => registerRequest.Name)" class="text-danger" />
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Email</label>
                             <InputText @bind-Value="registerRequest.Email" class="form-control" placeholder="seu@email.com" />
+                            <ValidationMessage For="@(() => registerRequest.Email)" class="text-danger" />
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Senha</label>
                             <InputText type="password" @bind-Value="registerRequest.Password" class="form-control" placeholder="Mínimo 8 caracteres" />
+                            <ValidationMessage For="@(() => registerRequest.Password)" class="text-danger" />
                             <small class="text-muted">A senha deve ter pelo menos 8 caracteres, 1 letra maiúscula, 1 número e 1 caractere especial</small>
                         </div>
 
@@ -72,8 +78,18 @@
 
     private class RegisterRequest
     {
+        [Required(ErrorMessage = "Nome é obrigatório")]
+        [MinLength(3, ErrorMessage = "Nome deve ter pelo menos 3 caracteres")]
         public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Email é obrigatório")]
+        [EmailAddress(ErrorMessage = "Email inválido")]
         public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Senha é obrigatória")]
+        [MinLength(8, ErrorMessage = "Senha deve ter pelo menos 8 caracteres")]
+        [RegularExpression(@"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$",
+            ErrorMessage = "Senha deve conter: 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial")]
         public string Password { get; set; } = string.Empty;
     }
 

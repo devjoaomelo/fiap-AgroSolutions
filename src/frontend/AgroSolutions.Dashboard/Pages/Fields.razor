@@ -1,6 +1,7 @@
 ﻿@page "/fields/{PropertyId:guid}"
 @using AgroSolutions.Dashboard.Services
 @using AgroSolutions.Dashboard.Models
+@using System.ComponentModel.DataAnnotations
 @inject FieldService FieldService
 @inject PropertyService PropertyService
 @inject AuthStateService AuthState
@@ -80,18 +81,33 @@
                             <div class="alert alert-danger">@createError</div>
                         }
                         <EditForm Model="@newField" OnValidSubmit="@CreateField">
+                            <DataAnnotationsValidator />
+
+                            <div class="alert alert-info mb-3">
+                                <strong>Área da Propriedade:</strong> @propertyTotalArea.ToString("N2") ha<br />
+                                <strong>Área Usada:</strong> @usedArea.ToString("N2") ha<br />
+                                <strong>Área Disponível:</strong> @availableArea.ToString("N2") ha
+                            </div>
+
                             <div class="mb-3">
                                 <label class="form-label">Nome do Talhão</label>
                                 <InputText @bind-Value="newField.Name" class="form-control" placeholder="Talhão Norte" />
+                                <ValidationMessage For="@(() => newField.Name)" class="text-danger" />
                             </div>
+
                             <div class="mb-3">
                                 <label class="form-label">Cultura</label>
                                 <InputText @bind-Value="newField.Culture" class="form-control" placeholder="Soja, Milho, etc." />
+                                <ValidationMessage For="@(() => newField.Culture)" class="text-danger" />
                             </div>
+
                             <div class="mb-3">
                                 <label class="form-label">Área (hectares)</label>
                                 <InputNumber @bind-Value="newField.Area" class="form-control" />
+                                <ValidationMessage For="@(() => newField.Area)" class="text-danger" />
+                                <small class="text-muted">Máximo disponível: @availableArea.ToString("N2") ha</small>
                             </div>
+
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancelar</button>
                                 <button type="submit" class="btn btn-primary" disabled="@isCreating">
@@ -124,6 +140,9 @@
     private bool showCreateModal = false;
     private string errorMessage = string.Empty;
     private string createError = string.Empty;
+    private double propertyTotalArea = 0;
+    private double usedArea = 0;
+    private double availableArea = 0;
 
     private CreateFieldModel newField = new();
 
@@ -161,10 +180,16 @@
             var properties = await PropertyService.GetUserPropertiesAsync();
             var property = properties.FirstOrDefault(p => p.Id == PropertyId);
             propertyName = property?.Name ?? "Propriedade";
+            propertyTotalArea = property?.TotalArea ?? 0;
+
+            // Calcular área usada
+            usedArea = fields.Sum(f => f.Area);
+            availableArea = propertyTotalArea - usedArea;
         }
         catch
         {
             propertyName = "Propriedade";
+            propertyTotalArea = 0;
         }
     }
 
@@ -175,6 +200,10 @@
             isLoading = true;
             errorMessage = string.Empty;
             fields = await FieldService.GetPropertyFieldsAsync(PropertyId);
+
+            // Recalcular área disponível
+            usedArea = fields.Sum(f => f.Area);
+            availableArea = propertyTotalArea - usedArea;
         }
         catch (Exception ex)
         {
@@ -192,6 +221,13 @@
         {
             isCreating = true;
             createError = string.Empty;
+
+            // Validar se a área não excede o disponível
+            if (newField.Area > availableArea)
+            {
+                createError = $"Área do talhão ({newField.Area:N2} ha) excede a área disponível ({availableArea:N2} ha)";
+                return;
+            }
 
             var success = await FieldService.CreateFieldAsync(
                 PropertyId,
@@ -229,8 +265,16 @@
 
     private class CreateFieldModel
     {
+        [Required(ErrorMessage = "Nome é obrigatório")]
+        [MinLength(3, ErrorMessage = "Nome deve ter pelo menos 3 caracteres")]
         public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Cultura é obrigatória")]
+        [MinLength(2, ErrorMessage = "Cultura deve ter pelo menos 2 caracteres")]
         public string Culture { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Área é obrigatória")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Área deve ser maior que zero")]
         public double Area { get; set; }
     }
 }
