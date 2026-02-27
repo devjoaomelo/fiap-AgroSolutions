@@ -19,7 +19,7 @@ public class PropertyService
     {
         SetAuthorizationHeader();
 
-        var response = await _httpClient.GetFromJsonAsync<PropertiesResponse>($"api/properties?userId={_authState.UserId}");
+        var response = await _httpClient.GetFromJsonAsync<PropertiesResponse>($"api/Properties/user/{_authState.UserId}");
         return response?.Properties ?? new List<Property>();
     }
 

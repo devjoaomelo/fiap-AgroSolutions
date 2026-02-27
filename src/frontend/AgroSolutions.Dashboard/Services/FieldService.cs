@@ -19,7 +19,7 @@ public class FieldService
     {
         SetAuthorizationHeader();
 
-        var response = await _httpClient.GetFromJsonAsync<FieldsResponse>($"api/fields?propertyId={propertyId}");
+        var response = await _httpClient.GetFromJsonAsync<FieldsResponse>($"api/Fields/property/{propertyId}");
         return response?.Fields ?? new List<Field>();
     }
 
