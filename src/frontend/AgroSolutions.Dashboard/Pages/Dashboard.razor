@@ -314,6 +314,7 @@ else
             }
 
             var propertyIds = userProperties.Select(p => p.Id).ToList();
+
             userFields = await FieldService.GetAllUserFieldsAsync(propertyIds);
 
             if (userFields.Count == 0)
@@ -326,7 +327,7 @@ else
             var tempAlerts = new List<Alert>();
             foreach (var field in userFields)
             {
-                var fieldAlerts = await AlertService.GetAlertsAsync(field.Id);
+                var fieldAlerts = await AlertService.GetFieldAlertsAsync(field.Id);
                 tempAlerts.AddRange(fieldAlerts);
             }
 
@@ -336,6 +337,7 @@ else
         catch (Exception ex)
         {
             errorMessage = ex.Message;
+            Console.WriteLine($"[DEBUG ERROR] {ex}");
         }
         finally
         {

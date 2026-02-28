@@ -25,3 +25,7 @@ public class Alert
     [JsonPropertyName("isResolved")]
     public bool IsResolved { get; set; }
 }
+public class AlertsListResponse
+{
+    public List<Alert> Alerts { get; set; } = new();
+}

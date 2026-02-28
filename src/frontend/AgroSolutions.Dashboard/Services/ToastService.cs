@@ -6,7 +6,6 @@ public class ToastService
 
     public void ShowSuccess(string message)
     {
-        Console.WriteLine($"[TOAST] ShowSuccess called: {message}");
         OnShow?.Invoke(message, ToastType.Success);
     }
 

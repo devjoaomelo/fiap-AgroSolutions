@@ -27,9 +27,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("[APP] Inicializando AuthState...");
         await AuthState.InitializeAsync();
-        Console.WriteLine($"[APP] AuthState inicializado. IsAuthenticated: {AuthState.IsAuthenticated}");
         isInitialized = true;
     }
 

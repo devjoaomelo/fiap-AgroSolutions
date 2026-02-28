@@ -29,7 +29,6 @@
 
     private void ShowToast(string message, ToastType type)
     {
-        Console.WriteLine($"[TOAST CONTAINER] ShowToast called: {message}, Type: {type}");
 
         var toast = new ToastMessage
         {
@@ -39,7 +38,6 @@
         };
 
         toasts.Add(toast);
-        Console.WriteLine($"[TOAST CONTAINER] Toast added. Total toasts: {toasts.Count}");
         StateHasChanged();
 
         Task.Run(async () =>

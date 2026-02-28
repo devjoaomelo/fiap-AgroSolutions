@@ -1,6 +1,6 @@
 ﻿using AgroSolutions.Dashboard.Models;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace AgroSolutions.Dashboard.Services;
 
@@ -15,24 +15,6 @@ public class AlertService
         _authState = authState;
     }
 
-    public async Task<List<Alert>> GetAlertsAsync(Guid? fieldId = null)
-    {
-        var url = fieldId.HasValue
-            ? $"api/alerts?fieldId={fieldId}"
-            : "api/alerts";
-
-        var response = await _httpClient.GetFromJsonAsync<AlertsResponse>(url);
-        return response?.Alerts ?? new List<Alert>();
-    }
-
-    public async Task<bool> ResolveAlertAsync(Guid alertId)
-    {
-        SetAuthorizationHeader();
-
-        var response = await _httpClient.PutAsync($"api/alerts/{alertId}/resolve", null);
-        return response.IsSuccessStatusCode;
-    }
-
     private void SetAuthorizationHeader()
     {
         if (!string.IsNullOrEmpty(_authState.Token))
@@ -42,9 +24,58 @@ public class AlertService
         }
     }
 
-    // Classe interna para mapear a resposta da API
-    private class AlertsResponse
+    public async Task<List<Alert>> GetFieldAlertsAsync(Guid fieldId)
     {
-        public List<Alert> Alerts { get; set; } = new();
+        try
+        {
+            SetAuthorizationHeader();
+
+            var url = $"api/Alerts?fieldId={fieldId}";
+            var response = await _httpClient.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new List<Alert>();
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            if (content.Contains("\"alerts\""))
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var wrapper = JsonSerializer.Deserialize<AlertsWrapper>(content, options);
+                return wrapper?.Alerts ?? new List<Alert>();
+            }
+
+            // Se não tiver wrapper, tentar lista direta
+            var alerts = JsonSerializer.Deserialize<List<Alert>>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return alerts ?? new List<Alert>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ALERT SERVICE ERROR] {ex.Message}");
+            Console.WriteLine($"[ALERT SERVICE ERROR] Stack: {ex.StackTrace}");
+            return new List<Alert>();
+        }
     }
+
+    public async Task<bool> ResolveAlertAsync(Guid alertId)
+    {
+        SetAuthorizationHeader();
+        var response = await _httpClient.PatchAsync($"api/Alerts/{alertId}/resolve", null);
+        return response.IsSuccessStatusCode;
+    }
+}
+
+public class AlertsWrapper
+{
+    public List<Alert> Alerts { get; set; } = new();
 }

@@ -7,6 +7,7 @@
 @inject AuthStateService AuthState
 @inject NavigationManager Navigation
 @inject ToastService ToastService
+@inject AlertService AlertService
 
 <PageTitle>Talhões - AgroSolutions</PageTitle>
 
@@ -81,7 +82,7 @@ else
         {
             <div class="col-md-6 col-lg-4">
                 <div class="field-card">
-                    <div class="field-card-header">
+                    <div class="@GetFieldHeaderClass(field.Id)">
                         <h5 class="mb-0">🌾 @field.Name</h5>
                     </div>
                     <div class="field-card-body">
@@ -94,7 +95,9 @@ else
                             <span class="property-value">@field.Area.ToString("N2") hectares</span>
                         </div>
                         <div class="mt-2">
-                            <span class="badge bg-success">Ativo</span>
+                            <span class="badge @GetFieldStatusBadgeClass(field.Id)">
+                                @GetFieldStatus(field.Id)
+                            </span>
                         </div>
                     </div>
                     <div class="field-card-footer">
@@ -221,6 +224,7 @@ else
     public Guid PropertyId { get; set; }
 
     private List<Field> fields = new();
+    private List<Alert> allFieldAlerts = new();
     private string propertyName = "";
     private bool isLoading = true;
     private bool isCreating = false;
@@ -287,6 +291,9 @@ else
 
             usedArea = fields.Sum(f => f.Area);
             availableArea = propertyTotalArea - usedArea;
+
+            // Carregar alertas dos talhões
+            await LoadFieldAlerts();
         }
         catch (Exception ex)
         {
@@ -358,6 +365,9 @@ else
             if (success)
             {
                 ToastService.ShowSuccess("Dados de sensor simulados com sucesso! Verifique o Dashboard.");
+
+                // Recarregar alertas para atualizar status
+                await LoadFieldAlerts();
             }
             else
             {
@@ -416,6 +426,68 @@ else
         {
             isDeleting = false;
         }
+    }
+
+    private async Task LoadFieldAlerts()
+    {
+        try
+        {
+            allFieldAlerts = new List<Alert>();
+
+            foreach (var field in fields)
+            {
+                var fieldAlerts = await AlertService.GetFieldAlertsAsync(field.Id);
+                allFieldAlerts.AddRange(fieldAlerts);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DEBUG ERROR] Erro ao carregar alertas: {ex.Message}");
+        }
+    }
+
+    private string GetFieldStatus(Guid fieldId)
+    {
+        var unresolvedAlerts = allFieldAlerts
+            .Where(a => a.FieldId == fieldId && !a.IsResolved)
+            .ToList();
+
+        if (!unresolvedAlerts.Any())
+            return "Normal";
+
+        var hasHighSeverity = unresolvedAlerts.Any(a => a.Severity == "Alta");
+        if (hasHighSeverity)
+            return "Crítico";
+
+        var hasMediumSeverity = unresolvedAlerts.Any(a => a.Severity == "Média");
+        if (hasMediumSeverity)
+            return "Alerta";
+
+        return "Normal";
+    }
+
+    private string GetFieldHeaderClass(Guid fieldId)
+    {
+        var status = GetFieldStatus(fieldId);
+
+        return status switch
+        {
+            "Crítico" => "field-card-header-critical",
+            "Alerta" => "field-card-header-warning",
+            _ => "field-card-header"
+        };
+    }
+
+    private string GetFieldStatusBadgeClass(Guid fieldId)
+    {
+        var status = GetFieldStatus(fieldId);
+
+        return status switch
+        {
+            "Crítico" => "bg-danger",
+            "Alerta" => "bg-warning",
+            _ => "bg-success"
+        };
     }
 
     private class CreateFieldModel

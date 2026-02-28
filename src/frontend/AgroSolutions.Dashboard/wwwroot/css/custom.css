@@ -335,3 +335,14 @@
     font-weight: 700;
     font-size: 1.25rem;
 }
+.field-card-header-critical {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+    color: white;
+    padding: 1.25rem;
+}
+
+.field-card-header-warning {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+    color: white;
+    padding: 1.25rem;
+}

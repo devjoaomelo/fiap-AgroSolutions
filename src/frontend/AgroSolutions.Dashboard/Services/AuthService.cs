@@ -40,10 +40,8 @@ public class AuthService
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Response content: {content}"); // DEBUG
 
                 var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
-                Console.WriteLine($"Login response: {loginResponse?.AccessToken}"); // DEBUG
 
                 return loginResponse;
             }
